@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:pet_connect/model/pet_details_model.dart';
 
 class PetCard extends StatelessWidget {
-  const PetCard({super.key});
+  final PetDetails details;
+
+  const PetCard({super.key, required this.details});
 
   @override
   Widget build(BuildContext context) {
@@ -13,17 +16,26 @@ class PetCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(40),
         border: Border.all(color: Colors.grey.shade100, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade200,
+            spreadRadius: 2,
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Stack(
         children: [
+          // Background Circle
           Positioned(
             top: 85,
             right: -130,
             child: Container(
               height: 400,
               width: 400,
-              decoration: const BoxDecoration(
-                color: Color(0xFFF9D5B8),
+              decoration: BoxDecoration(
+                color: details.backgroundColor,
                 shape: BoxShape.circle,
               ),
             ),
@@ -31,7 +43,11 @@ class PetCard extends StatelessWidget {
           Positioned(
             right: 0,
             bottom: 80,
-            child: Icon(Icons.pets, size: 270, color: const Color(0xFFD9A070)),
+            child: Image.asset(
+              details.icon,
+              height: 270,
+              color: details.iconColor,
+            ),
           ),
 
           Padding(
@@ -59,9 +75,7 @@ class PetCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                _buildTag("Playful"),
-                _buildTag("Energetic"),
-                _buildTag("Loyal"),
+                ...details.tags.map((tag) => _buildTag(tag)),
               ],
             ),
           ),
@@ -69,21 +83,22 @@ class PetCard extends StatelessWidget {
           Positioned(
             bottom: 60,
             left: 40,
-            child: Image.asset("assets/images/murphy.png", height: 400),
+            child: Image.asset(details.petImagePath, height: 350),
           ),
 
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
-              decoration: const BoxDecoration(
-                color: Color(0xFFF2C097),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(10),
-                  bottomRight: Radius.circular(10),
+              decoration: BoxDecoration(
+                color: details.backgroundColor,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(40),
+                  bottomRight: Radius.circular(0),
                   topLeft: Radius.circular(30),
                 ),
               ),
+
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -92,14 +107,14 @@ class PetCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Pet name: Murphy",
+                        "Pet name: ${details.name}",
                         style: GoogleFonts.alice(
                           fontWeight: FontWeight.bold,
                           fontSize: 22,
                         ),
                       ),
                       Text(
-                        "Golden Retriever · Adult · Male",
+                        details.breedAgeGender,
                         style: GoogleFonts.alice(
                           color: Colors.black.withOpacity(0.6),
                         ),
@@ -107,7 +122,7 @@ class PetCard extends StatelessWidget {
                     ],
                   ),
                   Text(
-                    "Rs.20000",
+                    details.price,
                     style: GoogleFonts.alice(
                       fontWeight: FontWeight.bold,
                       fontSize: 20,

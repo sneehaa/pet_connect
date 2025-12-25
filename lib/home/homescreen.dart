@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:pet_connect/widgets/category_item.dart';
 import 'package:pet_connect/widgets/custom_navbar.dart';
 import 'package:pet_connect/widgets/pet_card.dart';
+import 'package:pet_connect/widgets/pet_data.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,10 +13,18 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  bool isDiscoverSelected = true;
+  int _selectedIndex = 0;
+
+  void _onCategorySelected(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final selectedPetDetail = petDetails[_selectedIndex];
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -38,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           color: Colors.black,
                         ),
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
                         "Good morning",
                         style: GoogleFonts.alice(
@@ -68,6 +77,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
 
               const SizedBox(height: 25),
+
               Row(
                 children: [
                   Expanded(
@@ -86,7 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             width: 24,
                             height: 24,
                           ),
-                          SizedBox(width: 10),
+                          const SizedBox(width: 10),
                           Text(
                             "Search by breed, size, or name",
                             style: GoogleFonts.alice(
@@ -113,37 +123,29 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
 
               const SizedBox(height: 30),
-
               SizedBox(
                 height: 120,
-                child: ListView(
+                child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.only(right: 20),
-                  children: const [
-                    CategoryItem(
-                      label: "Dog",
-                      imagePath: 'assets/images/dog.png',
-                      isSelected: true,
-                    ),
-                    CategoryItem(
-                      label: "Cat",
-                      imagePath: 'assets/images/cat.png',
-                    ),
-                    CategoryItem(
-                      label: "Birds",
-                      imagePath: 'assets/images/bird.png',
-                    ),
-                    CategoryItem(
-                      label: "Rabbit",
-                      imagePath: 'assets/images/rabbit.png',
-                    ),
-                  ],
+
+                  itemCount: categories.length,
+                  itemBuilder: (context, index) {
+                    final category = categories[index];
+                    return CategoryItem(
+                      label: category.label,
+                      imagePath: category.imagePath,
+
+                      isSelected: index == _selectedIndex,
+
+                      onTap: () => _onCategorySelected(index),
+                    );
+                  },
                 ),
               ),
 
               const SizedBox(height: 20),
 
-              const PetCard(),
+              PetCard(details: selectedPetDetail),
             ],
           ),
         ),
