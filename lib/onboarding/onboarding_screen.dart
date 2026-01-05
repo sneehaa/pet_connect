@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:pet_connect/auth/presentation/view/login_view.dart';
+import 'package:pet_connect/features/user/auth/presentation/view/login_view.dart';
 import 'package:pet_connect/widgets/swipeable_button.dart';
 
 class OnboardingScreen extends StatelessWidget {
