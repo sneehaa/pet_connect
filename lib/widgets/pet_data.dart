@@ -1,12 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:pet_connect/model/pet_category_model.dart';
 import 'package:pet_connect/model/pet_details_model.dart';
 
-final List<PetCategory> categories = [
-  const PetCategory(label: "Dog", imagePath: 'assets/images/dog.png'),
-  const PetCategory(label: "Cat", imagePath: 'assets/images/cat.png'),
-  const PetCategory(label: "Rabbit", imagePath: 'assets/images/rabbit.png'),
-];
 
 final List<PetDetails> petDetails = [
   const PetDetails(

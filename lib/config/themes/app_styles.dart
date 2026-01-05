@@ -1,0 +1,31 @@
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:pet_connect/config/themes/app_colors.dart';
+
+class AppStyles {
+  const AppStyles._();
+
+  static TextStyle headline1 = GoogleFonts.alice(
+    fontSize: 40,
+    fontWeight: FontWeight.w600,
+    color: Colors.black,
+  );
+
+  static TextStyle headline2 = GoogleFonts.alice(
+    fontSize: 34,
+    fontWeight: FontWeight.w600,
+    color: Colors.black,
+  );
+
+  static TextStyle subtitle = GoogleFonts.alice(
+    color: AppColors.textLightGrey,
+    fontSize: 20,
+    fontWeight: FontWeight.w400,
+  );
+
+  static TextStyle linkText = GoogleFonts.alice(
+    fontSize: 18,
+    color: AppColors.errorRed,
+  );
+  
+}

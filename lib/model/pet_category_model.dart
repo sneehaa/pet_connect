@@ -1,6 +1,6 @@
-class PetCategory {
-  final String label;
-  final String imagePath;
+// class PetCategory {
+//   final String label;
+//   final String imagePath;
 
-  const PetCategory({required this.label, required this.imagePath});
-}
+//   const PetCategory({required this.label, required this.imagePath});
+// }
