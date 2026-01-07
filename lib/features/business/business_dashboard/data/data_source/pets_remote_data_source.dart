@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:pet_connect/config/constants/api_endpoints.dart';
 import 'package:pet_connect/core/failure/failure.dart';
 import 'package:pet_connect/core/network/http_service.dart';
 import 'package:pet_connect/core/provider/flutter_secure_storage.dart';
@@ -22,7 +23,6 @@ class PetsRemoteDataSource {
 
   PetsRemoteDataSource(this.dio, this.secureStorage);
 
-  // Helper method to get auth token
   Future<String?> _getAuthToken() async {
     final token = await secureStorage.read(key: 'businessAuthToken');
     if (token == null) {
@@ -36,15 +36,43 @@ class PetsRemoteDataSource {
   ) async {
     try {
       final token = await _getAuthToken();
+
+      // Use the full URL from ApiEndpoints
+      final url = ApiEndpoints.getPetsByBusiness(businessId);
+
+      print('🔗 Fetching from URL: $url');
+      print('🔑 Using token: ${token!.substring(0, 20)}...');
+
       final response = await dio.get(
-        '/pets/business/$businessId',
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
+        url, // Use the full URL here
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Accept': 'application/json',
+          },
+        ),
       );
+
+      print('✅ Response status: ${response.statusCode}');
+
+      if (response.data['pets'] == null) {
+        return Left(Failure(error: 'No pets data in response'));
+      }
+
       final pets = (response.data['pets'] as List)
           .map((e) => PetModel.fromJson(e))
           .toList();
+
+      print('✅ Successfully parsed ${pets.length} pets');
       return Right(pets);
     } on DioException catch (e) {
+      print('❌ DioError in getPetsByBusiness:');
+      print('   Type: ${e.type}');
+      print('   Message: ${e.message}');
+      print('   Error: ${e.error}');
+      print('   Response: ${e.response?.data}');
+      print('   Status: ${e.response?.statusCode}');
+
       return Left(
         Failure(
           error:
@@ -55,6 +83,7 @@ class PetsRemoteDataSource {
         ),
       );
     } catch (e) {
+      print('❌ Unexpected error: $e');
       return Left(Failure(error: 'Unexpected error: $e'));
     }
   }
