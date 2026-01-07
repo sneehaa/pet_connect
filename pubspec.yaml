@@ -49,6 +49,8 @@ dependencies:
   build_runner: ^2.10.4
   json_serializable: ^6.11.2
   file_picker: ^10.3.8
+  image_picker: ^1.2.1
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
