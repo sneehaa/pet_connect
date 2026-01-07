@@ -8,7 +8,7 @@ import 'package:pet_connect/features/business/business_auth/presentation/auth_vi
 import 'package:pet_connect/features/business/business_auth/presentation/state/auth_state.dart';
 import 'package:pet_connect/features/business/business_auth/presentation/view/register_view.dart';
 import 'package:pet_connect/features/business/business_auth/presentation/view/upload_document.dart';
-import 'package:pet_connect/features/user/home/homescreen.dart';
+import 'package:pet_connect/features/business/business_dashboard/presentation/view/business_dashboard.dart';
 
 class BusinessLoginScreen extends ConsumerStatefulWidget {
   const BusinessLoginScreen({super.key});
@@ -56,7 +56,9 @@ class _BusinessLoginScreenState extends ConsumerState<BusinessLoginScreen> {
           Future.delayed(const Duration(seconds: 1), () {
             if (mounted) {
               Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => const Homescreen()),
+                MaterialPageRoute(
+                  builder: (_) => const BusinessDashboardScreen(),
+                ),
               );
             }
           });

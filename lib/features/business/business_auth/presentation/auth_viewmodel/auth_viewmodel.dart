@@ -54,6 +54,7 @@ class BusinessViewModel extends StateNotifier<BusinessState> {
   }
 
   /// Login
+  /// Login
   Future<void> loginBusiness(String username, String password) async {
     state = state.copyWith(isLoading: true, isError: false, clearMessage: true);
 

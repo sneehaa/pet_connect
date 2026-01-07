@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:pet_connect/config/constants/api_endpoints.dart';
 import 'package:pet_connect/core/failure/failure.dart';
 import 'package:pet_connect/core/network/http_service.dart';
@@ -65,7 +66,6 @@ class BusinessRemoteDataSource {
     }
   }
 
-  /// Login business
   Future<Either<Failure, bool>> loginBusiness(
     String email,
     String password,
@@ -77,42 +77,72 @@ class BusinessRemoteDataSource {
       );
 
       final responseData = response.data as Map<String, dynamic>?;
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        if (responseData?['businessStatus'] == 'pending') {
-          return Left(
-            Failure(
-              error: 'Your business is under review. Please wait for approval.',
-            ),
-          );
-        }
-        if (responseData?['businessStatus'] == 'rejected') {
-          return Left(
-            Failure(
-              error:
-                  'Your business verification was rejected. Please contact support.',
-            ),
-          );
-        }
-        if (responseData != null && responseData.containsKey('token')) {
-          final token = responseData['token'];
-          await secureStorage.write(key: 'businessAuthToken', value: token);
-          return const Right(true);
-        }
-        return Left(Failure(error: responseData?['message'] ?? 'Login failed'));
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        return Left(
+          Failure(
+            error: responseData?['message'] ?? 'Invalid credentials',
+            statusCode: response.statusCode.toString(),
+          ),
+        );
       }
-      return Left(
-        Failure(
-          error: responseData?['message'] ?? 'Invalid credentials',
-          statusCode: response.statusCode.toString(),
-        ),
-      );
+
+      if (responseData == null) {
+        return Left(Failure(error: 'Invalid response from server'));
+      }
+
+      if (responseData['businessStatus'] == 'pending') {
+        return Left(
+          Failure(
+            error: 'Your business is under review. Please wait for approval.',
+          ),
+        );
+      }
+
+      if (responseData['businessStatus'] == 'rejected') {
+        return Left(
+          Failure(
+            error:
+                'Your business verification was rejected. Please contact support.',
+          ),
+        );
+      }
+
+      if (!responseData.containsKey('token')) {
+        return Left(Failure(error: 'No authentication token received'));
+      }
+
+      final token = responseData['token'];
+      await secureStorage.write(key: 'businessAuthToken', value: token);
+
+      String? businessId;
+      try {
+        final decodedToken = JwtDecoder.decode(token);
+        businessId =
+            decodedToken['businessId'] ??
+            decodedToken['business_id'] ??
+            decodedToken['id'] ??
+            decodedToken['sub'];
+      } catch (_) {}
+
+      if (responseData['business'] != null) {
+        businessId ??= (responseData['business'] as Map<String, dynamic>)['_id']
+            ?.toString();
+      } else {
+        businessId ??=
+            responseData['businessId']?.toString() ??
+            responseData['userId']?.toString();
+      }
+
+      if (businessId != null) {
+        await secureStorage.write(key: 'businessId', value: businessId);
+      }
+
+      return const Right(true);
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
         return Left(Failure(error: 'Connection timeout. Please try again.'));
       }
-
       if (e.type == DioExceptionType.badResponse) {
         final data = e.response?.data;
         return Left(
@@ -123,14 +153,12 @@ class BusinessRemoteDataSource {
           ),
         );
       }
-
       return Left(Failure(error: 'Network error. Please try again.'));
     } catch (_) {
       return Left(Failure(error: 'Something went wrong. Please try again.'));
     }
   }
 
-  /// Upload business documents (one at a time to match backend)
   Future<Either<Failure, bool>> uploadDocuments(List<String> filePaths) async {
     try {
       // Use temp token if available

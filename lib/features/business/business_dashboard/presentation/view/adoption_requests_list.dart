@@ -20,7 +20,7 @@ class AdoptionRequestsScreen extends ConsumerStatefulWidget {
 
 class _AdoptionRequestsScreenState
     extends ConsumerState<AdoptionRequestsScreen> {
-  String? _selectedFilter = 'all';
+  final String _selectedFilter = 'all';
 
   @override
   void initState() {
@@ -56,38 +56,7 @@ class _AdoptionRequestsScreenState
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.primaryWhite,
-        elevation: 0,
-        title: Text(
-          widget.petId != null
-              ? 'Pet Adoption Requests'
-              : 'All Adoption Requests',
-          style: AppStyles.headline2.copyWith(color: AppColors.textDarkGrey),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: Icon(Icons.arrow_back, color: AppColors.textDarkGrey),
-        ),
-        actions: [
-          if (widget.petId == null)
-            PopupMenuButton<String>(
-              onSelected: (value) {
-                setState(() {
-                  _selectedFilter = value;
-                });
-              },
-              icon: Icon(Icons.filter_list, color: AppColors.primaryOrange),
-              itemBuilder: (context) => [
-                const PopupMenuItem(value: 'all', child: Text('All Requests')),
-                const PopupMenuItem(value: 'pending', child: Text('Pending')),
-                const PopupMenuItem(value: 'approved', child: Text('Approved')),
-                const PopupMenuItem(value: 'rejected', child: Text('Rejected')),
-              ],
-            ),
-        ],
-      ),
+
       body: state.status == AdoptionStatus.loading
           ? const Center(child: CircularProgressIndicator())
           : state.status == AdoptionStatus.error

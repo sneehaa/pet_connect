@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pet_connect/config/themes/app_colors.dart';
 import 'package:pet_connect/config/themes/app_styles.dart';
+import 'package:pet_connect/core/provider/flutter_secure_storage.dart';
 import 'package:pet_connect/core/utils/snackbar_utils.dart';
 import 'package:pet_connect/features/business/business_dashboard/domain/entity/pet_entity.dart';
 import 'package:pet_connect/features/business/business_dashboard/presentation/state/pet_state.dart';
@@ -18,18 +19,72 @@ class PetListScreen extends ConsumerStatefulWidget {
 }
 
 class _PetListScreenState extends ConsumerState<PetListScreen> {
-  final String businessId = "your_business_id"; // Get from auth state
+  String? _businessId;
+  bool _isLoadingBusinessId = true;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(petViewModelProvider.notifier).loadPets(businessId);
-    });
+    _loadBusinessId();
+  }
+
+  Future<void> _loadBusinessId() async {
+    final secureStorage = ref.read(flutterSecureStorageProvider);
+    final businessId = await secureStorage.read(key: 'businessId');
+
+    if (mounted) {
+      setState(() {
+        _businessId = businessId;
+        _isLoadingBusinessId = false;
+      });
+
+      if (_businessId != null) {
+        ref.read(petViewModelProvider.notifier).loadPets(_businessId!);
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Show loading while getting business ID
+    if (_isLoadingBusinessId) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    // Show error if no business ID found
+    if (_businessId == null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.business, color: AppColors.primaryOrange, size: 80),
+            const SizedBox(height: 20),
+            Text('Business Not Found', style: AppStyles.headline3),
+            const SizedBox(height: 10),
+            Text('Please login again', style: AppStyles.subtitle),
+            const SizedBox(height: 30),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushReplacementNamed(context, '/business-login');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryOrange,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text('Go to Login', style: AppStyles.button),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Now we have businessId, show the pet list
+    return _buildPetListContent();
+  }
+
+  Widget _buildPetListContent() {
     ref.listen<PetState>(petViewModelProvider, (previous, next) {
       if (next.message != null) {
         showSnackBar(
@@ -46,33 +101,6 @@ class _PetListScreenState extends ConsumerState<PetListScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.primaryWhite,
-        elevation: 0,
-        title: Text(
-          'My Pets',
-          style: AppStyles.headline2.copyWith(color: AppColors.textDarkGrey),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const AdoptionRequestsScreen(),
-                ),
-              );
-            },
-            icon: Icon(
-              Icons.list_alt,
-              color: AppColors.primaryOrange,
-              size: 28,
-            ),
-          ),
-          const SizedBox(width: 10),
-        ],
-      ),
       body: state.status == PetStatus.loading
           ? const Center(child: CircularProgressIndicator())
           : state.status == PetStatus.error
@@ -96,7 +124,7 @@ class _PetListScreenState extends ConsumerState<PetListScreen> {
                     onPressed: () {
                       ref
                           .read(petViewModelProvider.notifier)
-                          .loadPets(businessId);
+                          .loadPets(_businessId!);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryOrange,
@@ -110,85 +138,147 @@ class _PetListScreenState extends ConsumerState<PetListScreen> {
               ),
             )
           : state.pets.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.pets, color: AppColors.primaryOrange, size: 80),
-                  const SizedBox(height: 20),
-                  Text('No Pets Added', style: AppStyles.headline3),
-                  Text(
-                    'Add your first pet to get started',
-                    style: AppStyles.subtitle,
-                  ),
-                  const SizedBox(height: 30),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AddEditPetScreen(),
-                        ),
-                      );
+          ? _buildEmptyState()
+          : Column(
+              children: [
+                // Header with Add Button
+                _buildHeader(state.pets.length),
+                // Pet List
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      await ref
+                          .read(petViewModelProvider.notifier)
+                          .loadPets(_businessId!);
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryOrange,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 40,
-                        vertical: 16,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.add,
-                          color: AppColors.primaryWhite,
-                          size: 24,
-                        ),
-                        const SizedBox(width: 10),
-                        Text('Add Pet', style: AppStyles.button),
-                      ],
+                    backgroundColor: AppColors.background,
+                    color: AppColors.primaryOrange,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                      itemCount: state.pets.length,
+                      itemBuilder: (context, index) {
+                        final pet = state.pets[index];
+                        return _buildPetCard(pet, context);
+                      },
                     ),
                   ),
-                ],
-              ),
-            )
-          : RefreshIndicator(
-              onRefresh: () async {
-                await ref
-                    .read(petViewModelProvider.notifier)
-                    .loadPets(businessId);
-              },
-              backgroundColor: AppColors.background,
-              color: AppColors.primaryOrange,
-              child: ListView.builder(
-                padding: const EdgeInsets.all(20),
-                itemCount: state.pets.length,
-                itemBuilder: (context, index) {
-                  final pet = state.pets[index];
-                  return _buildPetCard(pet, context);
-                },
-              ),
+                ),
+              ],
             ),
-      floatingActionButton: state.pets.isNotEmpty
-          ? FloatingActionButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => AddEditPetScreen()),
-                );
-              },
+    );
+  }
+
+  Widget _buildHeader(int petCount) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 15, 20, 20),
+      decoration: BoxDecoration(color: AppColors.background),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '$petCount ${petCount == 1 ? 'Pet' : 'Pets'}',
+                style: GoogleFonts.alice(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textDarkGrey,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Manage your listings',
+                style: GoogleFonts.alice(
+                  fontSize: 14,
+                  color: AppColors.textLightGrey,
+                ),
+              ),
+            ],
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AddEditPetScreen(),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryOrange,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(Icons.add, color: AppColors.primaryWhite, size: 30),
-            )
-          : null,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              elevation: 2,
+            ),
+            icon: Icon(Icons.add, color: AppColors.primaryWhite, size: 20),
+            label: Text(
+              'Add Pet',
+              style: GoogleFonts.alice(
+                color: AppColors.primaryWhite,
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(30),
+            decoration: BoxDecoration(
+              color: AppColors.primaryOrange.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.pets, color: AppColors.primaryOrange, size: 80),
+          ),
+          const SizedBox(height: 30),
+          Text('No Pets Added Yet', style: AppStyles.headline3),
+          const SizedBox(height: 10),
+          Text(
+            'Add your first pet to start managing\nadoptions for your business',
+            style: AppStyles.subtitle,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 40),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AddEditPetScreen(),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryOrange,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+              elevation: 3,
+            ),
+            icon: Icon(Icons.add, color: AppColors.primaryWhite, size: 24),
+            label: Text(
+              'Add Your First Pet',
+              style: GoogleFonts.alice(
+                color: AppColors.primaryWhite,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
