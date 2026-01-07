@@ -1,4 +1,10 @@
-enum BusinessFlow { idle, registered, documentsUploaded }
+enum BusinessFlow {
+  idle,
+  registered,
+  documentsUploaded,
+  pendingApproval,
+  loggedIn,
+}
 
 class BusinessState {
   final bool isLoading;

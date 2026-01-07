@@ -7,10 +7,6 @@ abstract class BusinessRepository {
 
   Future<Either<Failure, bool>> loginBusiness(String username, String password);
 
-  Future<Either<Failure, bool>> createOrUpdateProfile(
-    Map<String, dynamic> profileData,
-  );
-
   Future<Either<Failure, bool>> uploadDocuments(List<String> filePaths);
 
   Future<Either<Failure, List<dynamic>>> getNearby(

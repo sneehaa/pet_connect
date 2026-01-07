@@ -11,7 +11,7 @@ final businessRemoteRepositoryProvider = Provider<BusinessRepository>(
 );
 
 class BusinessRemoteRepository implements BusinessRepository {
-  final BusinessRemoteDataSource _remoteDataSource;
+final BusinessRemoteDataSource _remoteDataSource;
 
   BusinessRemoteRepository(this._remoteDataSource);
 
@@ -21,13 +21,11 @@ class BusinessRemoteRepository implements BusinessRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> loginBusiness(String username, String password) {
+  Future<Either<Failure, bool>> loginBusiness(
+    String username,
+    String password,
+  ) {
     return _remoteDataSource.loginBusiness(username, password);
-  }
-
-  @override
-  Future<Either<Failure, bool>> createOrUpdateProfile(Map<String, dynamic> profileData) {
-    return _remoteDataSource.createOrUpdateProfile(profileData);
   }
 
   @override
@@ -36,9 +34,11 @@ class BusinessRemoteRepository implements BusinessRepository {
   }
 
   @override
-  Future<Either<Failure, List<dynamic>>> getNearby(double latitude, double longitude) {
+  Future<Either<Failure, List<dynamic>>> getNearby(
+    double latitude,
+    double longitude,
+  ) {
     return _remoteDataSource.getNearby(latitude, longitude);
   }
+  
 }
-
-

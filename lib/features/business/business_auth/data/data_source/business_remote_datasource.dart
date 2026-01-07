@@ -67,88 +67,70 @@ class BusinessRemoteDataSource {
 
   /// Login business
   Future<Either<Failure, bool>> loginBusiness(
-    String username,
+    String email,
     String password,
   ) async {
     try {
       final response = await dio.post(
         ApiEndpoints.businessLogin,
-        data: {"username": username, "password": password},
+        data: {"email": email, "password": password},
       );
 
+      final responseData = response.data as Map<String, dynamic>?;
+
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final responseData = response.data as Map<String, dynamic>?;
-        if (responseData != null && responseData.containsKey('token')) {
-          final token = responseData['token'];
-          await secureStorage.write(key: "businessAuthToken", value: token);
-          return const Right(true);
-        } else {
+        if (responseData?['businessStatus'] == 'pending') {
           return Left(
             Failure(
-              error: response.data?['message'] ?? "Token not found",
-              statusCode: response.statusCode.toString(),
+              error: 'Your business is under review. Please wait for approval.',
             ),
           );
         }
-      } else {
-        return Left(
-          Failure(
-            error: response.data?['message'] ?? "Unknown error",
-            statusCode: response.statusCode.toString(),
-          ),
-        );
+        if (responseData?['businessStatus'] == 'rejected') {
+          return Left(
+            Failure(
+              error:
+                  'Your business verification was rejected. Please contact support.',
+            ),
+          );
+        }
+        if (responseData != null && responseData.containsKey('token')) {
+          final token = responseData['token'];
+          await secureStorage.write(key: 'businessAuthToken', value: token);
+          return const Right(true);
+        }
+        return Left(Failure(error: responseData?['message'] ?? 'Login failed'));
       }
+      return Left(
+        Failure(
+          error: responseData?['message'] ?? 'Invalid credentials',
+          statusCode: response.statusCode.toString(),
+        ),
+      );
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
-        return Left(Failure(error: "Connection timeout. Please try again."));
-      } else if (e.type == DioExceptionType.badResponse) {
-        return Left(Failure(error: "Server error. Please try again later."));
-      } else {
-        return Left(Failure(error: "An unexpected error occurred."));
-      }
-    } catch (e) {
-      return Left(Failure(error: "An unexpected error occurred."));
-    }
-  }
-
-  /// Create or update business profile
-  Future<Either<Failure, bool>> createOrUpdateProfile(
-    Map<String, dynamic> profileData,
-  ) async {
-    try {
-      final token = await secureStorage.read(key: "businessAuthToken");
-      if (token == null) {
-        return Left(Failure(error: "Authentication token not found"));
+        return Left(Failure(error: 'Connection timeout. Please try again.'));
       }
 
-      final response = await dio.post(
-        ApiEndpoints.businessProfile,
-        data: profileData,
-        options: Options(headers: {"Authorization": "Bearer $token"}),
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return const Right(true);
-      } else {
+      if (e.type == DioExceptionType.badResponse) {
+        final data = e.response?.data;
         return Left(
           Failure(
-            error: response.data?['message'] ?? "Unknown error",
-            statusCode: response.statusCode.toString(),
+            error: data is Map<String, dynamic>
+                ? data['message'] ?? 'Server error'
+                : 'Server error. Please try again later.',
           ),
         );
       }
-    } on DioException catch (e) {
-      return Left(
-        Failure(
-          error: e.error.toString(),
-          statusCode: e.response?.statusCode.toString() ?? '0',
-        ),
-      );
+
+      return Left(Failure(error: 'Network error. Please try again.'));
+    } catch (_) {
+      return Left(Failure(error: 'Something went wrong. Please try again.'));
     }
   }
 
-  /// Upload business documents (multipart/form-data)
+  /// Upload business documents (one at a time to match backend)
   Future<Either<Failure, bool>> uploadDocuments(List<String> filePaths) async {
     try {
       // Use temp token if available
@@ -160,46 +142,51 @@ class BusinessRemoteDataSource {
         }
       }
 
-      final formData = FormData();
+      int successCount = 0;
 
+      // Upload files one by one
       for (var path in filePaths) {
-        formData.files.add(
-          MapEntry(
-            'documents',
-            await MultipartFile.fromFile(path, filename: path.split('/').last),
-          ),
-        );
+        try {
+          final formData = FormData();
+
+          // Use "document" (singular) as backend expects
+          formData.files.add(
+            MapEntry(
+              'document', // Changed from 'documents' to 'document'
+              await MultipartFile.fromFile(
+                path,
+                filename: path.split('/').last,
+              ),
+            ),
+          );
+
+          final response = await dio.post(
+            ApiEndpoints.businessDocuments,
+            data: formData,
+            options: Options(
+              headers: {"Authorization": "Bearer $token"},
+              contentType: null,
+            ),
+          );
+
+          if (response.statusCode == 200 || response.statusCode == 201) {
+            successCount++;
+          }
+        } catch (e) {
+          print('Failed to upload file: $path - Error: $e');
+        }
       }
 
-      final response = await dio.post(
-        '/api/business/documents',
-        data: formData,
-        options: Options(
-          headers: {
-            "Authorization": "Bearer $token",
-            // ✅ DO NOT set Content-Type manually
-          },
-          contentType: null, // Let Dio set multipart/form-data automatically
-        ),
-        onSendProgress: (sent, total) {
-          final progress = total != 0
-              ? (sent / total * 100).toStringAsFixed(0)
-              : '0';
-          print('Uploading files: $progress%');
-        },
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        // Optionally delete temp token after upload
+      if (successCount == filePaths.length) {
+        // Delete temp token after successful upload
         await secureStorage.delete(key: "businessTempToken");
         return const Right(true);
-      } else {
+      } else if (successCount > 0) {
         return Left(
-          Failure(
-            error: response.data?['message'] ?? 'Upload failed',
-            statusCode: response.statusCode.toString(),
-          ),
+          Failure(error: 'Uploaded $successCount of ${filePaths.length} files'),
         );
+      } else {
+        return Left(Failure(error: 'Failed to upload documents'));
       }
     } on DioException catch (e) {
       print('DioException: ${e.type}');

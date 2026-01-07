@@ -35,20 +35,6 @@ class LoginBusinessUseCase {
   }
 }
 
-/// Profile UseCase (Create / Update)
-final profileBusinessUseCaseProvider =
-    Provider.autoDispose<ProfileBusinessUseCase>(
-  (ref) => ProfileBusinessUseCase(ref.read(businessRemoteRepositoryProvider)),
-);
-
-class ProfileBusinessUseCase {
-  final BusinessRepository repository;
-  ProfileBusinessUseCase(this.repository);
-
-  Future<Either<Failure, bool>> execute(Map<String, dynamic> profileData) async {
-    return repository.createOrUpdateProfile(profileData);
-  }
-}
 
 /// Upload Documents UseCase
 final uploadDocumentsUseCaseProvider =
