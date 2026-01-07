@@ -1,31 +1,23 @@
 import '../../domain/entity/pet_entity.dart';
 
 class PetModel extends PetEntity {
+  // Add localPhotos for new uploads
+  final List<String>? localPhotos;
+
   const PetModel({
-    String? id,
-    required String name,
-    required String breed,
-    required int age,
-    required String gender,
-    bool vaccinated = false,
-    String? description,
-    String? personality,
-    String? medicalInfo,
-    List<String>? photos,
-    bool available = true,
-  }) : super(
-          id: id,
-          name: name,
-          breed: breed,
-          age: age,
-          gender: gender,
-          vaccinated: vaccinated,
-          description: description,
-          personality: personality,
-          medicalInfo: medicalInfo,
-          photos: photos,
-          available: available,
-        );
+    super.id,
+    required super.name,
+    required super.breed,
+    required super.age,
+    required super.gender,
+    super.vaccinated,
+    super.description,
+    super.personality,
+    super.medicalInfo,
+    super.photos, 
+    this.localPhotos,
+    super.available,
+  });
 
   factory PetModel.fromJson(Map<String, dynamic> json) {
     return PetModel(
@@ -53,7 +45,9 @@ class PetModel extends PetEntity {
       "description": description,
       "personality": personality,
       "medicalInfo": medicalInfo,
-      "photos": photos,
+      "photos":
+          localPhotos ??
+          photos,
       "available": available,
     };
   }

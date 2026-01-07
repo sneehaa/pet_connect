@@ -2,13 +2,14 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+// Note: Assuming these imports work correctly in the user's project setup
 import 'package:pet_connect/config/themes/app_colors.dart';
 import 'package:pet_connect/config/themes/app_styles.dart';
 import 'package:pet_connect/core/utils/snackbar_utils.dart';
 import 'package:pet_connect/features/business/business_dashboard/domain/entity/pet_entity.dart';
 import 'package:pet_connect/features/business/business_dashboard/presentation/state/pet_state.dart';
+import 'package:pet_connect/features/business/business_dashboard/presentation/view/%20pets_list.dart';
 import 'package:pet_connect/features/business/business_dashboard/presentation/viewmodel/pet_view_model.dart';
 
 class AddEditPetScreen extends ConsumerStatefulWidget {
@@ -31,7 +32,10 @@ class _AddEditPetScreenState extends ConsumerState<AddEditPetScreen> {
   String? _selectedGender;
   bool _isVaccinated = false;
   bool _isAvailable = true;
-  final List<File> _selectedPhotos = [];
+
+  final List<File> _newPhotos = [];
+  List<String> _existingPhotos = [];
+
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -47,6 +51,7 @@ class _AddEditPetScreenState extends ConsumerState<AddEditPetScreen> {
       _descriptionController.text = widget.pet!.description ?? '';
       _personalityController.text = widget.pet!.personality ?? '';
       _medicalController.text = widget.pet!.medicalInfo ?? '';
+      _existingPhotos = widget.pet!.photos ?? [];
     }
   }
 
@@ -82,233 +87,199 @@ class _AddEditPetScreenState extends ConsumerState<AddEditPetScreen> {
     });
 
     final state = ref.watch(petViewModelProvider);
-
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.primaryWhite,
-        elevation: 0,
-        title: Text(
-          widget.pet == null ? 'Add New Pet' : 'Edit Pet Details',
-          style: AppStyles.headline2.copyWith(color: AppColors.textDarkGrey),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: Icon(Icons.arrow_back, color: AppColors.textDarkGrey),
-        ),
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
+      backgroundColor: AppColors.primaryWhite,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Photos Section
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Photos', style: AppStyles.headline3),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Add clear photos of your pet',
-                      style: AppStyles.subtitle,
-                    ),
-                    const SizedBox(height: 15),
-                    SizedBox(
-                      height: 150,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: _selectedPhotos.length + 1,
-                        itemBuilder: (context, index) {
-                          if (index == 0) {
-                            return _buildAddPhotoButton();
-                          } else {
-                            return _buildPhotoPreview(index - 1);
-                          }
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 30),
-                  ],
-                ),
-
-                // Basic Info
-                Text('Basic Information', style: AppStyles.headline3),
-                const SizedBox(height: 20),
-
-                // Name
-                _buildTextField(
-                  controller: _nameController,
-                  label: 'Pet Name',
-                  hintText: 'Enter pet name',
-                  icon: Icons.pets,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter pet name';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                // Breed
-                _buildTextField(
-                  controller: _breedController,
-                  label: 'Breed',
-                  hintText: 'Enter breed',
-                  icon: Icons.category,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter breed';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                Row(
-                  children: [
-                    // Age
-                    Expanded(
-                      child: _buildTextField(
-                        controller: _ageController,
-                        label: 'Age (years)',
-                        hintText: 'Age',
-                        icon: Icons.cake,
-                        keyboardType: TextInputType.number,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter age';
-                          }
-                          if (int.tryParse(value) == null) {
-                            return 'Please enter valid number';
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 20),
-
-                    // Gender
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Gender',
-                            style: GoogleFonts.alice(
-                              fontSize: 16,
-                              color: AppColors.textDarkGrey,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 15),
-                            decoration: BoxDecoration(
-                              color: AppColors.backgroundGrey.withOpacity(0.45),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                value: _selectedGender,
-                                hint: Text(
-                                  'Select Gender',
-                                  style: GoogleFonts.alice(
-                                    color: AppColors.textLightGrey,
-                                  ),
-                                ),
-                                isExpanded: true,
-                                icon: Icon(
-                                  Icons.arrow_drop_down,
-                                  color: AppColors.textLightGrey,
-                                ),
-                                items: ['Male', 'Female', 'Other'].map((
-                                  String value,
-                                ) {
-                                  return DropdownMenuItem<String>(
-                                    value: value,
-                                    child: Text(
-                                      value,
-                                      style: GoogleFonts.alice(
-                                        color: AppColors.textDarkGrey,
-                                      ),
-                                    ),
-                                  );
-                                }).toList(),
-                                onChanged: (value) {
-                                  setState(() {
-                                    _selectedGender = value;
-                                  });
-                                },
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                // 1. Custom Header
+                _buildCustomHeader(context),
                 const SizedBox(height: 30),
 
-                // Toggle Switches
-                _buildToggleSwitch(
-                  title: 'Vaccinated',
-                  subtitle: 'Pet has been vaccinated',
-                  value: _isVaccinated,
-                  onChanged: (value) {
-                    setState(() {
-                      _isVaccinated = value;
-                    });
-                  },
+                // 2. Photos Section
+                _buildSectionTitle(
+                  title: 'Pet Photos',
+                  icon: Icons.photo_library_outlined,
                 ),
                 const SizedBox(height: 15),
-                _buildToggleSwitch(
-                  title: 'Available for Adoption',
-                  subtitle: 'Pet is available for adoption',
-                  value: _isAvailable,
-                  onChanged: (value) {
-                    setState(() {
-                      _isAvailable = value;
-                    });
-                  },
+                SizedBox(
+                  height: 140,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _existingPhotos.length + _newPhotos.length + 1,
+                    itemBuilder: (context, index) {
+                      if (index == 0) return _buildAddPhotoButton();
+                      if (index <= _existingPhotos.length) {
+                        // Existing photos
+                        return _buildExistingPhotoPreview(index - 1);
+                      } else {
+                        // New photos
+                        return _buildNewPhotoPreview(
+                          index - _existingPhotos.length - 1,
+                        );
+                      }
+                    },
+                  ),
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 35),
 
-                // Description
-                _buildTextField(
-                  controller: _descriptionController,
-                  label: 'Description',
-                  hintText: 'Tell us about your pet...',
-                  icon: Icons.description,
-                  maxLines: 4,
+                // 3. Basic Information Section
+                _buildSectionTitle(
+                  title: 'Basic Details',
+                  icon: Icons.info_outline,
                 ),
-                const SizedBox(height: 20),
+                _buildSectionWrapper(
+                  children: [
+                    // Name
+                    _buildTextField(
+                      controller: _nameController,
+                      label: 'Pet Name',
+                      hintText: 'Max, Bella, Charlie...',
+                      icon: Icons.tag,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter pet name';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 20),
 
-                // Personality
-                _buildTextField(
-                  controller: _personalityController,
-                  label: 'Personality & Temperament',
-                  hintText: 'Friendly, playful, calm, etc.',
-                  icon: Icons.emoji_emotions,
-                  maxLines: 3,
+                    // Breed
+                    _buildTextField(
+                      controller: _breedController,
+                      label: 'Breed',
+                      hintText: 'Golden Retriever, Siamese...',
+                      icon: Icons.category_outlined,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter breed';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 20),
+
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Age
+                        Expanded(
+                          child: _buildTextField(
+                            controller: _ageController,
+                            label: 'Age (Months)',
+                            hintText: '3',
+                            icon: Icons.calendar_today_outlined,
+                            keyboardType: TextInputType.number,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter age';
+                              }
+                              if (int.tryParse(value) == null) {
+                                return 'Please enter valid number';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 15),
+
+                        // Gender
+                        Expanded(child: _buildGenderDropdown()),
+                      ],
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 35),
 
-                // Medical Information
-                _buildTextField(
-                  controller: _medicalController,
-                  label: 'Medical Information (Optional)',
-                  hintText: 'Any medical conditions or special needs',
-                  icon: Icons.medical_services,
-                  maxLines: 3,
+                // 4. Status Toggles Section
+                _buildSectionTitle(
+                  title: 'Status & Health',
+                  icon: Icons.check_circle_outline,
+                ),
+                _buildSectionWrapper(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 15,
+                    vertical: 10,
+                  ),
+                  children: [
+                    // Vaccinated
+                    _buildToggleSwitch(
+                      title: 'Vaccinated',
+                      subtitle: 'Pet has up-to-date vaccinations',
+                      value: _isVaccinated,
+                      onChanged: (value) {
+                        setState(() {
+                          _isVaccinated = value;
+                        });
+                      },
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8.0),
+                      child: Divider(
+                        color: AppColors.backgroundGrey,
+                        height: 1,
+                        thickness: 1,
+                      ),
+                    ),
+                    // Available
+                    _buildToggleSwitch(
+                      title: 'Available for Adoption',
+                      value: _isAvailable,
+                      onChanged: (value) {
+                        setState(() {
+                          _isAvailable = value;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 35),
+
+                // 5. Detailed Information Section
+                _buildSectionTitle(
+                  title: 'Personality & Medical',
+                  icon: Icons.description_outlined,
+                ),
+                _buildSectionWrapper(
+                  children: [
+                    // Personality
+                    _buildTextField(
+                      controller: _personalityController,
+                      label: 'Personality & Temperament',
+                      hintText: 'Friendly, playful, calm, loves kids, etc.',
+                      icon: Icons.emoji_emotions_outlined,
+                      maxLines: 3,
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Description
+                    _buildTextField(
+                      controller: _descriptionController,
+                      label: 'Description',
+                      hintText: 'Tell us about your pet, their story, etc.',
+                      icon: Icons.text_snippet_outlined,
+                      maxLines: 4,
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Medical Information
+                    _buildTextField(
+                      controller: _medicalController,
+                      label: 'Medical Information (Optional)',
+                      hintText: 'Any medical conditions or special needs',
+                      icon: Icons.medical_services_outlined,
+                      maxLines: 3,
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 40),
 
-                // Submit Button
                 state.isLoading
                     ? Center(
                         child: CircularProgressIndicator(
@@ -331,13 +302,20 @@ class _AddEditPetScreenState extends ConsumerState<AddEditPetScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryOrange,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(15),
                           ),
-                          minimumSize: const Size(double.infinity, 56),
+                          minimumSize: const Size(double.infinity, 58),
+                          elevation: 8,
+                          shadowColor: AppColors.primaryOrange.withOpacity(0.5),
                         ),
                         child: Text(
-                          widget.pet == null ? 'Add Pet' : 'Update Pet',
-                          style: AppStyles.button.copyWith(fontSize: 20),
+                          widget.pet == null
+                              ? 'CREATE NEW PET PROFILE'
+                              : 'UPDATE PET PROFILE',
+                          style: AppStyles.button.copyWith(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                 const SizedBox(height: 20),
@@ -349,76 +327,69 @@ class _AddEditPetScreenState extends ConsumerState<AddEditPetScreen> {
     );
   }
 
-  Widget _buildAddPhotoButton() {
-    return GestureDetector(
-      onTap: _pickImage,
-      child: Container(
-        width: 120,
-        height: 150,
-        margin: const EdgeInsets.only(right: 15),
-        decoration: BoxDecoration(
-          color: AppColors.backgroundGrey.withOpacity(0.45),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: AppColors.primaryOrange.withOpacity(0.3),
-            width: 2,
-            style: BorderStyle.solid,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.add_a_photo, color: AppColors.primaryOrange, size: 40),
-            const SizedBox(height: 10),
-            Text(
-              'Add Photo',
-              style: GoogleFonts.alice(
-                color: AppColors.primaryOrange,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPhotoPreview(int index) {
-    return Stack(
+  Widget _buildCustomHeader(BuildContext context) {
+    return Row(
       children: [
-        Container(
-          width: 120,
-          height: 150,
-          margin: const EdgeInsets.only(right: 15),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            image: DecorationImage(
-              image: FileImage(_selectedPhotos[index]),
-              fit: BoxFit.cover,
-            ),
-          ),
+        IconButton(
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (context) => const PetListScreen()),
+            );
+          },
+          icon: Icon(Icons.arrow_back_ios_new, color: AppColors.textDarkGrey),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
         ),
-        Positioned(
-          top: 8,
-          right: 8,
-          child: GestureDetector(
-            onTap: () {
-              setState(() {
-                _selectedPhotos.removeAt(index);
-              });
-            },
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.5),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.close, color: Colors.white, size: 16),
-            ),
+        const SizedBox(width: 15),
+        Text(
+          widget.pet == null ? 'Create New Profile' : 'Edit Pet Details',
+          style: AppStyles.headline2.copyWith(
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
+            color: AppColors.textDarkGrey,
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSectionTitle({required String title, required IconData icon}) {
+    return Row(
+      children: [
+        Icon(icon, color: AppColors.primaryOrange, size: 24),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: AppStyles.headline3.copyWith(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textDarkGrey,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSectionWrapper({
+    required List<Widget> children,
+    EdgeInsets padding = const EdgeInsets.all(20),
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(top: 10),
+      padding: padding,
+      decoration: BoxDecoration(
+        color: AppColors.primaryWhite,
+        borderRadius: BorderRadius.circular(25),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.textLightGrey.withOpacity(0.15),
+            spreadRadius: 0,
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(children: children),
     );
   }
 
@@ -431,39 +402,120 @@ class _AddEditPetScreenState extends ConsumerState<AddEditPetScreen> {
     TextInputType? keyboardType,
     String? Function(String?)? validator,
   }) {
+    final FocusNode focusNode = FocusNode();
+    Color borderColor = AppColors.textLightGrey.withOpacity(0.5);
+
+    return Focus(
+      onFocusChange: (hasFocus) {
+        setState(() {
+          borderColor = hasFocus
+              ? AppColors.primaryOrange
+              : AppColors.textLightGrey.withOpacity(0.5);
+        });
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: AppStyles.body.copyWith(
+              fontSize: 15,
+              color: AppColors.textDarkGrey,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 10),
+          TextFormField(
+            controller: controller,
+            maxLines: maxLines,
+            keyboardType: keyboardType,
+            validator: validator,
+            focusNode: focusNode,
+            style: AppStyles.body.copyWith(color: AppColors.textDarkGrey),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: AppColors.backgroundGrey.withOpacity(0.1),
+              hintText: hintText,
+              hintStyle: AppStyles.body.copyWith(
+                color: AppColors.textLightGrey,
+              ),
+              prefixIcon: Icon(icon, color: AppColors.primaryOrange, size: 22),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(15),
+                borderSide: BorderSide(color: borderColor, width: 1.0),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(15),
+                borderSide: BorderSide(
+                  color: AppColors.textLightGrey.withOpacity(0.3),
+                  width: 1.0,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(15),
+                borderSide: const BorderSide(
+                  color: AppColors.primaryOrange,
+                  width: 2.0,
+                ),
+              ),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: maxLines > 1 ? 15 : 18,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGenderDropdown() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label,
-          style: GoogleFonts.alice(
-            fontSize: 16,
+          'Gender',
+          style: AppStyles.body.copyWith(
+            fontSize: 15,
             color: AppColors.textDarkGrey,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          maxLines: maxLines,
-          keyboardType: keyboardType,
-          validator: validator,
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: AppColors.backgroundGrey.withOpacity(0.45),
-            hintText: hintText,
-            hintStyle: GoogleFonts.alice(color: AppColors.textLightGrey),
-            prefixIcon: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Icon(icon, color: AppColors.textLightGrey, size: 22),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 15),
+          decoration: BoxDecoration(
+            color: AppColors.backgroundGrey.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(
+              color: AppColors.textLightGrey.withOpacity(0.3),
+              width: 1.0,
             ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: maxLines > 1 ? 20 : 18,
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _selectedGender,
+              hint: Text(
+                'Select',
+                style: AppStyles.body.copyWith(color: AppColors.textLightGrey),
+              ),
+              isExpanded: true,
+              icon: Icon(Icons.arrow_drop_down, color: AppColors.primaryOrange),
+              style: AppStyles.body.copyWith(
+                color: AppColors.textDarkGrey,
+                fontSize: 16,
+              ),
+              items: ['Male', 'Female', 'Other'].map((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedGender = value;
+                });
+              },
             ),
           ),
         ),
@@ -473,39 +525,154 @@ class _AddEditPetScreenState extends ConsumerState<AddEditPetScreen> {
 
   Widget _buildToggleSwitch({
     required String title,
-    required String subtitle,
+    String? subtitle,
     required bool value,
     required Function(bool) onChanged,
   }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: GoogleFonts.alice(
-                fontSize: 16,
-                color: AppColors.textDarkGrey,
-                fontWeight: FontWeight.w500,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: AppStyles.body.copyWith(
+                  fontSize: 16,
+                  color: AppColors.textDarkGrey,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: GoogleFonts.alice(
-                fontSize: 14,
-                color: AppColors.textLightGrey,
-              ),
-            ),
-          ],
+              if (subtitle != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: AppStyles.small.copyWith(
+                    fontSize: 12,
+                    color: AppColors.textLightGrey,
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
         Switch(
           value: value,
           onChanged: onChanged,
           activeThumbColor: AppColors.primaryOrange,
-          activeTrackColor: AppColors.primaryOrange.withOpacity(0.3),
+          activeTrackColor: AppColors.primaryOrange.withOpacity(0.5),
+          inactiveThumbColor: AppColors.textLightGrey,
+          inactiveTrackColor: AppColors.textLightGrey.withOpacity(0.3),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAddPhotoButton() {
+    return GestureDetector(
+      onTap: _pickImage,
+      child: Card(
+        elevation: 4,
+        shadowColor: AppColors.primaryOrange.withOpacity(0.3),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Container(
+          width: 120,
+          height: 140,
+          margin: const EdgeInsets.only(right: 15),
+          decoration: BoxDecoration(
+            color: AppColors.primaryWhite,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: AppColors.primaryOrange.withOpacity(0.7),
+              width: 1.5,
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.add_a_photo_outlined,
+                color: AppColors.primaryOrange,
+                size: 30,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Add Photo',
+                style: AppStyles.body.copyWith(color: AppColors.primaryOrange),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExistingPhotoPreview(int index) {
+    return Stack(
+      children: [
+        Container(
+          width: 120,
+          height: 140,
+          margin: const EdgeInsets.only(right: 15),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            image: DecorationImage(
+              image: NetworkImage(_existingPhotos[index]),
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+        Positioned(
+          top: 5,
+          right: 10,
+          child: GestureDetector(
+            onTap: () => setState(() => _existingPhotos.removeAt(index)),
+            child: CircleAvatar(
+              radius: 12,
+              backgroundColor: AppColors.errorRed,
+              child: const Icon(
+                Icons.close,
+                color: AppColors.primaryWhite,
+                size: 14,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNewPhotoPreview(int index) {
+    return Stack(
+      children: [
+        Container(
+          width: 120,
+          height: 140,
+          margin: const EdgeInsets.only(right: 15),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            image: DecorationImage(
+              image: FileImage(_newPhotos[index]),
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+        Positioned(
+          top: 5,
+          right: 10,
+          child: GestureDetector(
+            onTap: () => setState(() => _newPhotos.removeAt(index)),
+            child: CircleAvatar(
+              radius: 12,
+              backgroundColor: AppColors.errorRed,
+              child: const Icon(
+                Icons.close,
+                color: AppColors.primaryWhite,
+                size: 14,
+              ),
+            ),
+          ),
         ),
       ],
     );
@@ -514,9 +681,15 @@ class _AddEditPetScreenState extends ConsumerState<AddEditPetScreen> {
   Future<void> _pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
-      setState(() {
-        _selectedPhotos.add(File(image.path));
-      });
+      if (_existingPhotos.length + _newPhotos.length >= 5) {
+        showSnackBar(
+          context: context,
+          message: 'Maximum 5 photos allowed.',
+          isSuccess: false,
+        );
+        return;
+      }
+      setState(() => _newPhotos.add(File(image.path)));
     }
   }
 
@@ -537,17 +710,18 @@ class _AddEditPetScreenState extends ConsumerState<AddEditPetScreen> {
       medicalInfo: _medicalController.text.trim().isEmpty
           ? null
           : _medicalController.text.trim(),
-      photos: widget.pet?.photos, // Keep existing photos
+      photos: _existingPhotos, 
       available: _isAvailable,
     );
 
-    // Convert selected photos to paths
-    final photoPaths = _selectedPhotos.map((file) => file.path).toList();
+    final newPhotoPaths = _newPhotos.map((file) => file.path).toList();
 
     if (widget.pet == null) {
-      ref.read(petViewModelProvider.notifier).addPet(pet, photoPaths);
+      ref.read(petViewModelProvider.notifier).addPet(pet, newPhotoPaths);
     } else {
-      ref.read(petViewModelProvider.notifier).updatePet(pet, photoPaths);
+      ref
+          .read(petViewModelProvider.notifier)
+          .updatePet(pet, newPhotoPaths, widget.pet!.id!);
     }
   }
 }

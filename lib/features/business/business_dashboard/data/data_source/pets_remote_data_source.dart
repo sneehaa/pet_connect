@@ -36,8 +36,6 @@ class PetsRemoteDataSource {
   ) async {
     try {
       final token = await _getAuthToken();
-
-      // Use the full URL from ApiEndpoints
       final url = ApiEndpoints.getPetsByBusiness(businessId);
 
       print('🔗 Fetching from URL: $url');
@@ -124,8 +122,10 @@ class PetsRemoteDataSource {
         }
       }
 
+      final url = ApiEndpoints.createPet();
+
       final response = await dio.post(
-        '/pets',
+        url,
         data: formData,
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
@@ -150,6 +150,7 @@ class PetsRemoteDataSource {
   Future<Either<Failure, PetModel>> updatePet(
     PetEntity pet,
     List<String>? photoPaths,
+    String petId,
   ) async {
     try {
       final token = await _getAuthToken();
@@ -182,9 +183,9 @@ class PetsRemoteDataSource {
           );
         }
       }
-
+      final url = ApiEndpoints.updatePet(petId);
       final response = await dio.put(
-        '/pets/${pet.id}',
+        url,
         data: formData,
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
@@ -210,9 +211,10 @@ class PetsRemoteDataSource {
 
   Future<Either<Failure, bool>> deletePet(String petId) async {
     try {
+      final url = ApiEndpoints.deletePet(petId);
       final token = await _getAuthToken();
       final response = await dio.delete(
-        '/pets/$petId',
+        url,
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
       return Right(response.data['success'] ?? false);

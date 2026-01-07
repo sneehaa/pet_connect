@@ -56,7 +56,6 @@ class PetViewModel extends StateNotifier<PetState> {
     );
   }
 
-  /// Add new pet
   Future<void> addPet(PetEntity pet, List<String>? photoPaths) async {
     state = state.copyWith(status: PetStatus.loading, message: null);
     final result = await _useCases.addPet.execute(pet, photoPaths);
@@ -67,15 +66,23 @@ class PetViewModel extends StateNotifier<PetState> {
       ),
       (newPet) {
         final updated = List<PetEntity>.from(state.pets)..add(newPet);
-        state = state.copyWith(status: PetStatus.loaded, pets: updated);
+        state = state.copyWith(
+          status: PetStatus.loaded,
+          pets: updated,
+          message: 'Pet added successfully!',
+        );
       },
     );
   }
 
   /// Update existing pet
-  Future<void> updatePet(PetEntity pet, List<String>? photoPaths) async {
+  Future<void> updatePet(
+    PetEntity pet,
+    List<String>? photoPaths,
+    String petId,
+  ) async {
     state = state.copyWith(status: PetStatus.loading, message: null);
-    final result = await _useCases.updatePet.execute(pet, photoPaths);
+    final result = await _useCases.updatePet.execute(pet, photoPaths, petId);
     result.fold(
       (failure) => state = state.copyWith(
         status: PetStatus.error,
@@ -85,7 +92,11 @@ class PetViewModel extends StateNotifier<PetState> {
         final updated = state.pets
             .map((p) => p.id == updatedPet.id ? updatedPet : p)
             .toList();
-        state = state.copyWith(status: PetStatus.loaded, pets: updated);
+        state = state.copyWith(
+          status: PetStatus.loaded,
+          pets: updated,
+          message: 'Pet updated successfully!',
+        );
       },
     );
   }

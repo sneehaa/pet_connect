@@ -14,6 +14,7 @@ abstract class BusinessDashboardRepository {
   Future<Either<Failure, PetEntity>> updatePet(
     PetEntity pet,
     List<String>? photos,
+    String petId,
   );
   Future<Either<Failure, bool>> deletePet(String petId);
   Future<Either<Failure, bool>> changePetStatus(String petId, bool available);

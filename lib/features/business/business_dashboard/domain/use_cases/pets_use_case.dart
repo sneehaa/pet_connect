@@ -48,8 +48,9 @@ class UpdatePetUseCase {
   Future<Either<Failure, PetEntity>> execute(
     PetEntity pet,
     List<String>? photos,
+    String petId
   ) {
-    return repository.updatePet(pet, photos);
+    return repository.updatePet(pet, photos, petId);
   }
 }
 
@@ -68,12 +69,11 @@ class DeletePetUseCase {
 }
 
 /// Change Pet Status UseCase
-final changePetStatusUseCaseProvider =
-    Provider.autoDispose<ChangePetStatusUseCase>((ref) {
-      return ChangePetStatusUseCase(
-        ref.read(businessDashboardRepositoryProvider),
-      );
-    });
+final changePetStatusUseCaseProvider = Provider.autoDispose<ChangePetStatusUseCase>((ref) {
+  return ChangePetStatusUseCase(
+    ref.read(businessDashboardRepositoryProvider),
+  );
+});
 
 class ChangePetStatusUseCase {
   final BusinessDashboardRepository repository;
