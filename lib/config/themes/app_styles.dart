@@ -12,7 +12,13 @@ class AppStyles {
   );
 
   static TextStyle headline2 = GoogleFonts.alice(
-    fontSize: 34,
+    fontSize: 35,
+    fontWeight: FontWeight.w600,
+    color: Colors.black,
+  );
+
+  static TextStyle headline3 = GoogleFonts.alice(
+    fontSize: 23,
     fontWeight: FontWeight.w600,
     color: Colors.black,
   );
@@ -27,5 +33,4 @@ class AppStyles {
     fontSize: 18,
     color: AppColors.errorRed,
   );
-  
 }

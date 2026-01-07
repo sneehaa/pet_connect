@@ -1,30 +1,36 @@
-class AuthState {
-  final bool isLoading;
-  final String? message;
-  final bool isError;
-  final String? imageName;
+enum BusinessFlow { idle, registered, documentsUploaded }
 
-  AuthState({
+class BusinessState {
+  final bool isLoading;
+  final bool isError;
+  final String? message;
+  final List<dynamic>? nearbyBusinesses;
+  final BusinessFlow flow;
+
+  BusinessState({
     required this.isLoading,
-    this.message,
     this.isError = false,
-    this.imageName,
+    this.message,
+    this.nearbyBusinesses,
+    this.flow = BusinessFlow.idle,
   });
 
-  factory AuthState.initial() => AuthState(isLoading: false);
+  factory BusinessState.initial() => BusinessState(isLoading: false);
 
-  AuthState copyWith({
+  BusinessState copyWith({
     bool? isLoading,
-    String? message,
     bool? isError,
-    String? imageName,
+    String? message,
+    List<dynamic>? nearbyBusinesses,
     bool clearMessage = false,
+    BusinessFlow? flow,
   }) {
-    return AuthState(
+    return BusinessState(
       isLoading: isLoading ?? this.isLoading,
-      message: clearMessage ? null : (message ?? this.message), 
       isError: isError ?? this.isError,
-      imageName: imageName ?? this.imageName,
+      message: clearMessage ? null : (message ?? this.message),
+      nearbyBusinesses: nearbyBusinesses ?? this.nearbyBusinesses,
+      flow: flow ?? this.flow,
     );
   }
 }

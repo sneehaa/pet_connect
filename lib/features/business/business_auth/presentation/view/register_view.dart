@@ -1,24 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:pet_connect/features/user/auth/domain/entity/auth_entity.dart';
-import 'package:pet_connect/features/user/auth/presentation/auth_viewmodel/auth_viewmodel.dart';
-import 'package:pet_connect/features/user/auth/presentation/state/auth_state.dart';
-import 'package:pet_connect/features/user/auth/presentation/view/login_view.dart';
 import 'package:pet_connect/config/themes/app_colors.dart';
 import 'package:pet_connect/config/themes/app_styles.dart';
 import 'package:pet_connect/core/utils/snackbar_utils.dart';
+import 'package:pet_connect/features/business/business_auth/domain/entity/business_entity.dart';
+import 'package:pet_connect/features/business/business_auth/presentation/auth_viewmodel/auth_viewmodel.dart';
+import 'package:pet_connect/features/business/business_auth/presentation/state/auth_state.dart';
+import 'package:pet_connect/features/business/business_auth/presentation/view/upload_document.dart';
+import 'package:pet_connect/features/user/auth/presentation/auth_viewmodel/auth_viewmodel.dart';
+import 'package:pet_connect/features/user/auth/presentation/view/login_view.dart';
 
-class SignupScreen extends ConsumerStatefulWidget {
-  const SignupScreen({super.key});
+class BusinessSignupScreen extends ConsumerStatefulWidget {
+  const BusinessSignupScreen({super.key});
 
   @override
-  ConsumerState<SignupScreen> createState() => _SignupScreenState();
+  ConsumerState<BusinessSignupScreen> createState() =>
+      _BusinessSignupScreenState();
 }
 
-class _SignupScreenState extends ConsumerState<SignupScreen> {
+class _BusinessSignupScreenState extends ConsumerState<BusinessSignupScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final TextEditingController _fullNameController = TextEditingController();
+  final TextEditingController _businessNameController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -27,8 +30,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<AuthState>(authViewModelProvider, (previous, next) {
-      // Only show snackbar when loading finishes and there's a new message
+    ref.listen<BusinessState>(businessViewModelProvider, (previous, next) {
       if (previous?.isLoading == true &&
           next.isLoading == false &&
           next.message != null) {
@@ -37,17 +39,19 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           message: next.message!,
           isSuccess: !next.isError,
         );
-
-        // Navigate to login on successful registration
-        if (!next.isError && next.message == 'User Registered Successfully') {
-          Future.delayed(const Duration(seconds: 2), () {
-            if (mounted) {
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-              );
-            }
-          });
-        }
+      }
+      if (previous?.isLoading == true &&
+          next.isLoading == false &&
+          !next.isError &&
+          next.flow == BusinessFlow.registered) {
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const UploadBusinessDocument()),
+            );
+          }
+        });
       }
     });
 
@@ -75,7 +79,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                           ),
                         ),
                       ),
-                      Text('Create your Account', style: AppStyles.headline2),
+                      Text(
+                        'Create your Business Account',
+                        style: AppStyles.headline3,
+                      ),
                       Text(
                         'Please enter your details',
                         style: AppStyles.subtitle,
@@ -86,13 +93,13 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                         child: Column(
                           children: [
                             TextFormField(
-                              controller: _fullNameController,
+                              controller: _businessNameController,
                               decoration: InputDecoration(
                                 filled: true,
                                 fillColor: AppColors.backgroundGrey.withOpacity(
                                   0.45,
                                 ),
-                                labelText: 'Full Name',
+                                labelText: 'Business Name',
                                 labelStyle: GoogleFonts.alice(
                                   fontSize: 18,
                                   color: AppColors.textLightGrey,
@@ -313,9 +320,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                 : ElevatedButton(
                                     onPressed: () async {
                                       if (_formKey.currentState!.validate()) {
-                                        final authEntity = AuthEntity(
-                                          userId: null,
-                                          fullName: _fullNameController.text
+                                        final businessEntity = BusinessEntity(
+                                          businessId: null,
+                                          businessName: _businessNameController
+                                              .text
                                               .trim(),
                                           username: _usernameController.text
                                               .trim(),
@@ -325,16 +333,17 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                               .trim(),
                                           password: _passwordController.text
                                               .trim(),
-                                          location: _addressController.text
+                                          address: _addressController.text
                                               .trim(),
                                           role: 'User',
                                         );
 
                                         await ref
                                             .read(
-                                              authViewModelProvider.notifier,
+                                              businessViewModelProvider
+                                                  .notifier,
                                             )
-                                            .registerUser(authEntity);
+                                            .registerBusiness(businessEntity);
                                       }
                                     },
                                     style: ElevatedButton.styleFrom(

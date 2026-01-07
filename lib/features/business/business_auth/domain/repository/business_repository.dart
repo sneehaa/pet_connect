@@ -4,5 +4,17 @@ import 'package:pet_connect/features/business/business_auth/domain/entity/busine
 
 abstract class BusinessRepository {
   Future<Either<Failure, bool>> registerBusiness(BusinessEntity entity);
+
   Future<Either<Failure, bool>> loginBusiness(String username, String password);
+
+  Future<Either<Failure, bool>> createOrUpdateProfile(
+    Map<String, dynamic> profileData,
+  );
+
+  Future<Either<Failure, bool>> uploadDocuments(List<String> filePaths);
+
+  Future<Either<Failure, List<dynamic>>> getNearby(
+    double latitude,
+    double longitude,
+  );
 }

@@ -48,6 +48,7 @@ dependencies:
   equatable: ^2.0.8
   build_runner: ^2.10.4
   json_serializable: ^6.11.2
+  file_picker: ^10.3.8
 
 dev_dependencies:
   flutter_test:

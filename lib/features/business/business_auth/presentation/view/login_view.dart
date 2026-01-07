@@ -4,26 +4,28 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:pet_connect/config/themes/app_colors.dart';
 import 'package:pet_connect/config/themes/app_styles.dart';
 import 'package:pet_connect/core/utils/snackbar_utils.dart';
+import 'package:pet_connect/features/business/business_auth/presentation/auth_viewmodel/auth_viewmodel.dart';
+import 'package:pet_connect/features/business/business_auth/presentation/state/auth_state.dart';
+import 'package:pet_connect/features/business/business_auth/presentation/view/register_view.dart';
 import 'package:pet_connect/features/user/auth/presentation/auth_viewmodel/auth_viewmodel.dart';
-import 'package:pet_connect/features/user/auth/presentation/state/auth_state.dart';
-import 'package:pet_connect/features/user/auth/presentation/view/register_view.dart';
 import 'package:pet_connect/features/user/home/homescreen.dart';
 
-class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+class BusinessLoginScreen extends ConsumerStatefulWidget {
+  const BusinessLoginScreen({super.key});
 
   @override
-  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<BusinessLoginScreen> createState() =>
+      _BusinessLoginScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
+class _BusinessLoginScreenState extends ConsumerState<BusinessLoginScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<AuthState>(authViewModelProvider, (previous, next) {
+    ref.listen<BusinessState>(businessViewModelProvider, (previous, next) {
       if (next.message != null) {
         showSnackBar(
           context: context,
@@ -66,7 +68,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                         ),
                       ),
-                      Text('Welcome Back', style: AppStyles.headline2),
+                      Text('Business Login', style: AppStyles.headline2),
                       Text(
                         'Please enter your details',
                         style: AppStyles.subtitle,
@@ -180,9 +182,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       if (_formKey.currentState!.validate()) {
                                         ref
                                             .read(
-                                              authViewModelProvider.notifier,
+                                              businessViewModelProvider
+                                                  .notifier,
                                             )
-                                            .loginUser(
+                                            .loginBusiness(
                                               _emailController.text.trim(),
                                               _passwordController.text.trim(),
                                             );
@@ -222,7 +225,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) =>
-                                          const SignupScreen(),
+                                          const BusinessSignupScreen(),
                                     ),
                                   ),
                                   child: Text(

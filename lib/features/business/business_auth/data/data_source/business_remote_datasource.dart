@@ -27,10 +27,9 @@ class BusinessRemoteDataSource {
     BusinessEntity business,
   ) async {
     try {
-      BusinessApiModel apiModel = BusinessApiModel.fromEntity(business);
-
-      Response response = await dio.post(
-        ApiEndpoints.businessRegister, // e.g., "/business/register"
+      final apiModel = BusinessApiModel.fromEntity(business);
+      final response = await dio.post(
+        ApiEndpoints.businessRegister,
         data: {
           "businessName": apiModel.businessName,
           "username": apiModel.username,
@@ -43,6 +42,10 @@ class BusinessRemoteDataSource {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        final tempToken = response.data['tempToken'];
+        if (tempToken != null) {
+          await secureStorage.write(key: "businessTempToken", value: tempToken);
+        }
         return const Right(true);
       } else {
         return Left(
@@ -68,19 +71,16 @@ class BusinessRemoteDataSource {
     String password,
   ) async {
     try {
-      Response response = await dio.post(
+      final response = await dio.post(
         ApiEndpoints.businessLogin,
         data: {"username": username, "password": password},
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final Map<String, dynamic>? responseData =
-            response.data as Map<String, dynamic>?;
-
+        final responseData = response.data as Map<String, dynamic>?;
         if (responseData != null && responseData.containsKey('token')) {
           final token = responseData['token'];
           await secureStorage.write(key: "businessAuthToken", value: token);
-
           return const Right(true);
         } else {
           return Left(
@@ -117,14 +117,13 @@ class BusinessRemoteDataSource {
     Map<String, dynamic> profileData,
   ) async {
     try {
-      // Get token from secure storage
       final token = await secureStorage.read(key: "businessAuthToken");
       if (token == null) {
         return Left(Failure(error: "Authentication token not found"));
       }
 
-      Response response = await dio.post(
-        ApiEndpoints.businessProfile, // e.g., "/business/profile"
+      final response = await dio.post(
+        ApiEndpoints.businessProfile,
         data: profileData,
         options: Options(headers: {"Authorization": "Bearer $token"}),
       );
@@ -146,8 +145,111 @@ class BusinessRemoteDataSource {
           statusCode: e.response?.statusCode.toString() ?? '0',
         ),
       );
+    }
+  }
+
+  /// Upload business documents (multipart/form-data)
+  Future<Either<Failure, bool>> uploadDocuments(List<String> filePaths) async {
+    try {
+      // Use temp token if available
+      String? token = await secureStorage.read(key: "businessTempToken");
+      if (token == null) {
+        token = await secureStorage.read(key: "businessAuthToken");
+        if (token == null) {
+          return Left(Failure(error: "Authentication token not found"));
+        }
+      }
+
+      final formData = FormData();
+
+      for (var path in filePaths) {
+        formData.files.add(
+          MapEntry(
+            'documents',
+            await MultipartFile.fromFile(path, filename: path.split('/').last),
+          ),
+        );
+      }
+
+      final response = await dio.post(
+        '/api/business/documents',
+        data: formData,
+        options: Options(
+          headers: {
+            "Authorization": "Bearer $token",
+            // ✅ DO NOT set Content-Type manually
+          },
+          contentType: null, // Let Dio set multipart/form-data automatically
+        ),
+        onSendProgress: (sent, total) {
+          final progress = total != 0
+              ? (sent / total * 100).toStringAsFixed(0)
+              : '0';
+          print('Uploading files: $progress%');
+        },
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // Optionally delete temp token after upload
+        await secureStorage.delete(key: "businessTempToken");
+        return const Right(true);
+      } else {
+        return Left(
+          Failure(
+            error: response.data?['message'] ?? 'Upload failed',
+            statusCode: response.statusCode.toString(),
+          ),
+        );
+      }
+    } on DioException catch (e) {
+      print('DioException: ${e.type}');
+      print('Message: ${e.message}');
+      print('Response: ${e.response?.data}');
+      print('Status Code: ${e.response?.statusCode}');
+
+      return Left(
+        Failure(
+          error:
+              e.response?.data?['message'] ??
+              e.message ??
+              'Failed to upload documents',
+          statusCode: e.response?.statusCode?.toString() ?? '0',
+        ),
+      );
     } catch (e) {
-      return Left(Failure(error: "An unexpected error occurred."));
+      print('Unexpected error: $e');
+      return Left(Failure(error: 'Unexpected error: $e', statusCode: '0'));
+    }
+  }
+
+  /// Get nearby businesses
+  Future<Either<Failure, List<dynamic>>> getNearby(
+    double latitude,
+    double longitude,
+  ) async {
+    try {
+      final response = await dio.get(
+        ApiEndpoints.businessNearby,
+        queryParameters: {"latitude": latitude, "longitude": longitude},
+      );
+
+      if (response.statusCode == 200) {
+        return Right(response.data['businesses'] as List<dynamic>);
+      } else {
+        return Left(
+          Failure(
+            error: response.data['message'] ?? "Unknown error",
+            statusCode: response.statusCode.toString(),
+          ),
+        );
+      }
+    } on DioException catch (e) {
+      return Left(
+        Failure(
+          error: e.error.toString(),
+          statusCode: e.response?.statusCode.toString() ?? '0',
+        ),
+      );
     }
   }
 }

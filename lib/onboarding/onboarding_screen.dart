@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:pet_connect/features/user/auth/presentation/view/login_view.dart';
+import 'package:pet_connect/utils/login_choice.dart';
 import 'package:pet_connect/widgets/swipeable_button.dart';
 
 class OnboardingScreen extends StatelessWidget {
@@ -114,7 +114,7 @@ class OnboardingScreen extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const LoginScreen(),
+                                builder: (context) => const LoginChoiceScreen(),
                               ),
                             );
                           },

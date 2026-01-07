@@ -10,10 +10,11 @@ class ApiEndpoints {
   static const String userRegister = "${userBaseUrl}register";
 
   // business service url
-  static const String businessBaseUrl = "http://192.168.68.106:5501/api/business/";
+  static const String businessBaseUrl =
+      "http://192.168.68.106:5501/api/business/";
   static const String businessLogin = "${businessBaseUrl}login";
   static const String businessRegister = "${businessBaseUrl}register";
   static const String businessProfile = "${businessBaseUrl}profile";
-  static const String businessDocuments = "${businessBaseUrl}documents";
+  static const String businessDocuments = "${businessBaseUrl}upload-documents";
   static const String businessNearby = "${businessBaseUrl}nearby";
 }

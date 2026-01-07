@@ -16,17 +16,29 @@ class BusinessRemoteRepository implements BusinessRepository {
   BusinessRemoteRepository(this._remoteDataSource);
 
   @override
-  Future<Either<Failure, bool>> registerBusiness(
-    BusinessEntity business,
-  ) async {
-    return await _remoteDataSource.registerBusiness(business);
+  Future<Either<Failure, bool>> registerBusiness(BusinessEntity entity) {
+    return _remoteDataSource.registerBusiness(entity);
   }
 
   @override
-  Future<Either<Failure, bool>> loginBusiness(
-    String username,
-    String password,
-  ) async {
-    return await _remoteDataSource.loginBusiness(username, password);
+  Future<Either<Failure, bool>> loginBusiness(String username, String password) {
+    return _remoteDataSource.loginBusiness(username, password);
+  }
+
+  @override
+  Future<Either<Failure, bool>> createOrUpdateProfile(Map<String, dynamic> profileData) {
+    return _remoteDataSource.createOrUpdateProfile(profileData);
+  }
+
+  @override
+  Future<Either<Failure, bool>> uploadDocuments(List<String> filePaths) {
+    return _remoteDataSource.uploadDocuments(filePaths);
+  }
+
+  @override
+  Future<Either<Failure, List<dynamic>>> getNearby(double latitude, double longitude) {
+    return _remoteDataSource.getNearby(latitude, longitude);
   }
 }
+
+
