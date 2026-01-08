@@ -17,5 +17,5 @@ class AppColors {
   static const Color errorRed = Colors.red; // Used for links and error messages
   static const Color primaryWhite = Colors.white;
   static const Color textGrey = Color(0xFF555555);
-  static const Color background = Color(0xFFFFF6EC);
+  static const Color background = Color.fromARGB(255, 255, 248, 240);
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:pet_connect/config/themes/app_colors.dart';
+import 'package:pet_connect/config/themes/app_styles.dart';
 import 'package:pet_connect/features/business/business_dashboard/presentation/view/%20pets_list.dart';
 import 'package:pet_connect/features/business/business_dashboard/presentation/view/adoption_requests_list.dart';
 
@@ -15,96 +15,74 @@ class BusinessDashboardScreen extends StatefulWidget {
 class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
   int _selectedIndex = 0;
 
-  // Define screen titles and icons (using asset paths for the header icon)
   final List<Map<String, dynamic>> _screenData = [
     {
       'title': 'Dashboard',
-      'icon': 'assets/icons/home.png',
+      'icon_asset': 'assets/icons/app.png',
       'subtitle': 'Overview of your business',
     },
     {
       'title': 'My Pets',
-      'icon': 'assets/icons/paw.png',
+      'icon_asset': 'assets/icons/paw.png',
       'subtitle': 'Manage your pet listings',
     },
     {
       'title': 'Adoption History',
-      'icon': 'assets/icons/requests.png',
+      'icon_asset': 'assets/icons/requests.png',
       'subtitle': 'Track all adoption requests',
     },
     {
       'title': 'Profile',
-      'icon': 'assets/icons/business.png',
+      'icon_asset': 'assets/icons/user.png',
       'subtitle': 'Business settings & info',
     },
   ];
 
-  // Asset icon paths for bottom nav
-  final List<String> _navIcons = [
-    'assets/icons/home.png',
+  final List<String> _navAssetPaths = [
+    'assets/icons/app.png',
     'assets/icons/paw.png',
     'assets/icons/requests.png',
-    'assets/icons/business.png',
+    'assets/icons/user.png',
   ];
-
   final List<String> _navLabels = ['Home', 'Pets', 'History', 'Profile'];
+
+  final Color _textDeepDark = Colors.black;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primaryWhite,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                // Custom App Bar
-                _buildCustomAppBar(),
-                // Content
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.background,
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(30),
-                        topRight: Radius.circular(30),
-                      ),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(30),
-                        topRight: Radius.circular(30),
-                      ),
-                      child: _getSelectedPage(),
-                    ),
-                  ),
-                ),
-              ],
+      // 1. Set Scaffold background to the desired yellow color
+      backgroundColor: AppColors.background,
+      body: Column(
+        children: [
+          // The SizedBox(height: 50) in the AppBar already provides top padding,
+          // so we don't strictly need a top SafeArea, but the padding in the AppBar is kept.
+          _buildCustomAppBar(),
+          Expanded(
+            child: Container(
+              // 2. Ensure the expanded content area also confirms the background color
+              color: AppColors.background,
+              child: _getSelectedPage(),
             ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: _buildBottomNavBar(),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
+      bottomNavigationBar: _buildBottomNavBar(),
     );
   }
 
   Widget _buildCustomAppBar() {
     final screenData = _screenData[_selectedIndex];
-
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 15, 20, 25),
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 25),
       decoration: BoxDecoration(
         color: AppColors.primaryWhite,
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryOrange.withOpacity(0.08),
+            color: Colors.black.withOpacity(0.06),
             blurRadius: 20,
-            offset: const Offset(0, 4),
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -114,59 +92,54 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Profile/Menu Button
-              Container(
-                height: 45,
-                width: 45,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.primaryOrange.withOpacity(0.1),
-                      AppColors.primaryOrange.withOpacity(0.05),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // This SizedBox acts as the replacement for top SafeArea padding
+                  SizedBox(height: 50),
+                  Text(
+                    'Welcome back,',
+                    style: AppStyles.small.copyWith(
+                      color: AppColors.textLightGrey,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.menu_rounded,
-                  color: AppColors.primaryOrange,
-                  size: 24,
-                ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Pet Business',
+                    style: AppStyles.headline3.copyWith(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: _textDeepDark,
+                    ),
+                  ),
+                ],
               ),
-              // Notification Button
               Container(
-                height: 45,
                 width: 45,
+                height: 45,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.primaryOrange.withOpacity(0.1),
-                      AppColors.primaryOrange.withOpacity(0.05),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppColors.primaryWhite,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey.shade300, width: 1),
                 ),
                 child: Stack(
                   children: [
                     Center(
-                      child: Icon(
-                        Icons.notifications_outlined,
-                        color: AppColors.primaryOrange,
-                        size: 24,
+                      child: Image.asset(
+                        'assets/icons/bell.png',
+                        height: 26,
+                        color: _textDeepDark,
                       ),
                     ),
                     Positioned(
-                      right: 10,
-                      top: 10,
+                      right: 8,
+                      top: 8,
                       child: Container(
-                        height: 8,
-                        width: 8,
+                        width: 10,
+                        height: 10,
                         decoration: BoxDecoration(
-                          color: Colors.red,
+                          color: AppColors.errorRed,
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: AppColors.primaryWhite,
@@ -180,58 +153,59 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          // Title and Icon
+          const SizedBox(height: 30),
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                width: 56,
+                height: 56,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
+                    begin: Alignment.bottomLeft,
+                    end: Alignment.topRight,
                     colors: [
                       AppColors.primaryOrange,
-                      AppColors.primaryOrange.withOpacity(0.8),
+                      AppColors.primaryOrange.withOpacity(0.7),
                     ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primaryOrange.withOpacity(0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
+                      color: AppColors.primaryOrange.withOpacity(0.4),
+                      blurRadius: 15,
+                      offset: const Offset(0, 6),
                     ),
                   ],
                 ),
-                child: Image.asset(
-                  screenData['icon'],
-                  width: 28,
-                  height: 28,
-                  color: AppColors.primaryWhite,
+                child: Center(
+                  child: Image.asset(
+                    screenData['icon_asset'] as String,
+                    color: AppColors.primaryWhite,
+                    height: 28,
+                  ),
                 ),
               ),
-              const SizedBox(width: 15),
+              const SizedBox(width: 20),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       screenData['title'],
-                      style: GoogleFonts.alice(
+                      style: AppStyles.headline3.copyWith(
                         fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textDarkGrey,
-                        letterSpacing: -0.5,
+                        fontWeight: FontWeight.w800,
+                        color: _textDeepDark,
+                        height: 1.1,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       screenData['subtitle'],
-                      style: GoogleFonts.alice(
+                      style: AppStyles.small.copyWith(
                         fontSize: 14,
                         color: AppColors.textLightGrey,
-                        fontWeight: FontWeight.w400,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -249,9 +223,15 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
       case 0:
         return _buildHomePage();
       case 1:
-        return const PetListScreen();
+        return const Padding(
+          padding: EdgeInsets.only(top: 16.0),
+          child: PetListScreen(),
+        );
       case 2:
-        return const AdoptionRequestsScreen();
+        return const Padding(
+          padding: EdgeInsets.only(top: 16.0),
+          child: AdoptionRequestsScreen(),
+        );
       case 3:
         return _buildProfilePage();
       default:
@@ -260,89 +240,243 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
   }
 
   Widget _buildHomePage() {
-    return Center(
-      child: Text(
-        'Home Dashboard',
-        style: GoogleFonts.alice(fontSize: 20, color: AppColors.textDarkGrey),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 150,
+              height: 150,
+              decoration: BoxDecoration(
+                color: AppColors.primaryOrange.withOpacity(0.12),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.primaryOrange.withOpacity(0.2),
+                  width: 5,
+                ),
+              ),
+              child: Center(
+                child: Image.asset(
+                  _screenData[0]['icon_asset'] as String,
+                  height: 60,
+                  color: AppColors.primaryOrange,
+                ),
+              ),
+            ),
+            const SizedBox(height: 30),
+            Text(
+              'Dashboard Overview',
+              textAlign: TextAlign.center,
+              style: AppStyles.headline3.copyWith(
+                fontSize: 26,
+                fontWeight: FontWeight.w700,
+                color: _textDeepDark,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 30.0),
+              child: Text(
+                'Monitor your pet listings, track adoption progress, and view key business metrics here.',
+                textAlign: TextAlign.center,
+                style: AppStyles.body.copyWith(
+                  fontSize: 16,
+                  color: AppColors.textLightGrey.withOpacity(0.9),
+                  height: 1.4,
+                ),
+              ),
+            ),
+            const SizedBox(height: 40),
+            ElevatedButton(
+              onPressed: () {},
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryOrange,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 30,
+                  vertical: 15,
+                ),
+              ),
+              child: Text(
+                'View Analytics (Soon)',
+                style: AppStyles.button.copyWith(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primaryWhite,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildProfilePage() {
-    return Center(
-      child: Text(
-        'Business Profile',
-        style: GoogleFonts.alice(fontSize: 20, color: AppColors.textDarkGrey),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 150,
+              height: 150,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primaryOrange.withOpacity(0.15),
+                    AppColors.primaryOrange.withOpacity(0.05),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primaryOrange.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Image.asset(
+                  _screenData[3]['icon_asset'] as String,
+                  height: 60,
+                  color: AppColors.primaryOrange,
+                ),
+              ),
+            ),
+            const SizedBox(height: 30),
+            Text(
+              'Business Profile',
+              textAlign: TextAlign.center,
+              style: AppStyles.headline3.copyWith(
+                fontSize: 26,
+                fontWeight: FontWeight.w700,
+                color: _textDeepDark,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 30.0),
+              child: Text(
+                'Manage your company details, operational hours, contact information, and account settings.',
+                textAlign: TextAlign.center,
+                style: AppStyles.body.copyWith(
+                  fontSize: 16,
+                  color: AppColors.textLightGrey.withOpacity(0.9),
+                  height: 1.4,
+                ),
+              ),
+            ),
+            const SizedBox(height: 40),
+            OutlinedButton(
+              onPressed: () {},
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: AppColors.primaryOrange, width: 2),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 30,
+                  vertical: 15,
+                ),
+              ),
+              child: Text(
+                'Edit Information',
+                style: AppStyles.button.copyWith(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primaryOrange,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildBottomNavBar() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 25),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      height: 68,
-      decoration: BoxDecoration(
-        color: AppColors.primaryWhite,
-        borderRadius: BorderRadius.circular(25),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 20,
-            spreadRadius: 1,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: List.generate(4, (index) {
-          return _buildNavItem(index);
-        }),
+      color: AppColors.background,
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+      child: Container(
+        height: 85,
+        decoration: BoxDecoration(
+          color: AppColors.primaryWhite,
+          borderRadius: BorderRadius.circular(25),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primaryOrange.withOpacity(0.2),
+              blurRadius: 25,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: List.generate(4, (index) {
+            return Expanded(child: _buildNavItem(index));
+          }),
+        ),
       ),
     );
   }
 
   Widget _buildNavItem(int index) {
-    bool isSelected = _selectedIndex == index;
-
+    final isSelected = _selectedIndex == index;
     return GestureDetector(
       onTap: () {
         setState(() {
           _selectedIndex = index;
         });
       },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeInOut,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primaryOrange.withOpacity(0.1)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(15),
-        ),
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        height: 75,
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(
-              _navIcons[index],
-              width: 24,
-              height: 24,
-              color: isSelected
-                  ? AppColors.primaryOrange
-                  : AppColors.textLightGrey,
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.fastOutSlowIn,
+              width: isSelected ? 56 : 50,
+              height: isSelected ? 56 : 50,
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? AppColors.primaryOrange.withOpacity(0.15)
+                    : Colors.transparent,
+                shape: BoxShape.circle,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    _navAssetPaths[index],
+                    height: 26,
+                    color: isSelected
+                        ? AppColors.primaryOrange
+                        : AppColors.textDarkGrey,
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 2),
             Text(
               _navLabels[index],
-              style: GoogleFonts.alice(
+              style: AppStyles.small.copyWith(
                 fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 color: isSelected
                     ? AppColors.primaryOrange
-                    : AppColors.textLightGrey,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    : AppColors.textDarkGrey,
               ),
             ),
           ],

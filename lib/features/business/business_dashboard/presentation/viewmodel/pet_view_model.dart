@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:pet_connect/features/business/business_dashboard/domain/entity/pet_entity.dart';
@@ -43,16 +45,24 @@ class PetViewModel extends StateNotifier<PetState> {
 
   PetViewModel(this._useCases) : super(const PetState());
 
-  /// Load pets for a business
+
   Future<void> loadPets(String businessId) async {
     state = state.copyWith(status: PetStatus.loading, message: null);
     final result = await _useCases.getPets.execute(businessId);
+
     result.fold(
-      (failure) => state = state.copyWith(
-        status: PetStatus.error,
-        message: failure.error,
-      ),
-      (pets) => state = state.copyWith(status: PetStatus.loaded, pets: pets),
+      (failure) {
+        print('Failed to load pets: ${failure.error}');
+        state = state.copyWith(status: PetStatus.error, message: failure.error);
+      },
+      (pets) {
+        print('Successfully loaded ${pets.length} pets');
+        state = state.copyWith(
+          status: PetStatus.loaded,
+          pets: pets,
+          message: null,
+        );
+      },
     );
   }
 
@@ -147,6 +157,21 @@ class PetViewModel extends StateNotifier<PetState> {
         }
       },
     );
+  }
+
+  // Add this inside PetViewModel class (anywhere, but not touching existing methods)
+  Future<List<String>> _uploadPhotos(List<File> photos) async {
+    List<String> urls = [];
+    for (var photo in photos) {
+      final url = await _uploadFile(photo);
+      urls.add(url);
+    }
+    return urls;
+  }
+
+  Future<String> _uploadFile(File file) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    return "https://example.com/${file.path.split('/').last}";
   }
 
   /// Reset state

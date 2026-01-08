@@ -6,16 +6,15 @@ import 'package:pet_connect/config/constants/api_endpoints.dart';
 import 'package:pet_connect/core/failure/failure.dart';
 import 'package:pet_connect/core/network/http_service.dart';
 import 'package:pet_connect/core/provider/flutter_secure_storage.dart';
+import 'package:pet_connect/features/business/business_dashboard/data/model/pet_model.dart';
+import 'package:pet_connect/features/business/business_dashboard/domain/entity/pet_entity.dart';
 
-import '../../domain/entity/pet_entity.dart';
-import '../model/pet_model.dart';
-
-final petsRemoteDataSourceProvider = Provider<PetsRemoteDataSource>(
-  (ref) => PetsRemoteDataSource(
+final petsRemoteDataSourceProvider = Provider<PetsRemoteDataSource>((ref) {
+  return PetsRemoteDataSource(
     ref.read(httpServiceProvider),
     ref.read(flutterSecureStorageProvider),
-  ),
-);
+  );
+});
 
 class PetsRemoteDataSource {
   final Dio dio;
@@ -23,213 +22,117 @@ class PetsRemoteDataSource {
 
   PetsRemoteDataSource(this.dio, this.secureStorage);
 
-  Future<String?> _getAuthToken() async {
-    final token = await secureStorage.read(key: 'businessAuthToken');
-    if (token == null) {
-      throw Exception('No authentication token found');
-    }
-    return token;
+  Future<String?> _getBusinessAuthToken() async {
+    return await secureStorage.read(key: 'businessAuthToken');
   }
 
-  Future<Either<Failure, List<PetModel>>> getPetsByBusiness(
-    String businessId,
+  Future<bool> _isBusinessAuthenticated() async {
+    final token = await _getBusinessAuthToken();
+    return token != null && token.isNotEmpty;
+  }
+
+  Future<void> _validateBusinessAuth() async {
+    if (!await _isBusinessAuthenticated()) {
+      throw Exception(
+        'Business authentication required. Please login as business.',
+      );
+    }
+  }
+
+  Future<Either<Failure, PetEntity>> addPet(
+    PetEntity pet,
+    List<String>? photoPaths,
   ) async {
     try {
-      final token = await _getAuthToken();
-      final url = ApiEndpoints.getPetsByBusiness(businessId);
+      await _validateBusinessAuth();
+      final token = await _getBusinessAuthToken();
 
-      print('🔗 Fetching from URL: $url');
-      print('🔑 Using token: ${token!.substring(0, 20)}...');
-
-      final response = await dio.get(
-        url, // Use the full URL here
+      final response = await dio.post(
+        ApiEndpoints.createPet(),
+        data: _buildPetFormData(pet, photoPaths),
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
             'Accept': 'application/json',
           },
-        ),
-      );
-
-      print('✅ Response status: ${response.statusCode}');
-
-      if (response.data['pets'] == null) {
-        return Left(Failure(error: 'No pets data in response'));
-      }
-
-      final pets = (response.data['pets'] as List)
-          .map((e) => PetModel.fromJson(e))
-          .toList();
-
-      print('✅ Successfully parsed ${pets.length} pets');
-      return Right(pets);
-    } on DioException catch (e) {
-      print('❌ DioError in getPetsByBusiness:');
-      print('   Type: ${e.type}');
-      print('   Message: ${e.message}');
-      print('   Error: ${e.error}');
-      print('   Response: ${e.response?.data}');
-      print('   Status: ${e.response?.statusCode}');
-
-      return Left(
-        Failure(
-          error:
-              e.response?.data?['message'] ??
-              e.message ??
-              'Failed to fetch pets',
-          statusCode: e.response?.statusCode?.toString() ?? '0',
-        ),
-      );
-    } catch (e) {
-      print('❌ Unexpected error: $e');
-      return Left(Failure(error: 'Unexpected error: $e'));
-    }
-  }
-
-  Future<Either<Failure, PetModel>> addPet(
-    PetEntity pet,
-    List<String>? photoPaths,
-  ) async {
-    try {
-      final token = await _getAuthToken();
-      final petModel = PetModel(
-        id: pet.id,
-        name: pet.name,
-        breed: pet.breed,
-        age: pet.age,
-        gender: pet.gender,
-        vaccinated: pet.vaccinated,
-        description: pet.description,
-        personality: pet.personality,
-        medicalInfo: pet.medicalInfo,
-        photos: pet.photos,
-        available: pet.available,
-      );
-
-      final formData = FormData.fromMap(petModel.toJson());
-
-      if (photoPaths != null && photoPaths.isNotEmpty) {
-        for (var path in photoPaths) {
-          formData.files.add(
-            MapEntry(
-              'photos',
-              await MultipartFile.fromFile(
-                path,
-                filename: path.split('/').last,
-              ),
-            ),
-          );
-        }
-      }
-
-      final url = ApiEndpoints.createPet();
-
-      final response = await dio.post(
-        url,
-        data: formData,
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-          contentType: null,
+          contentType: null, 
         ),
       );
 
       return Right(PetModel.fromJson(response.data['pet']));
     } on DioException catch (e) {
-      return Left(
-        Failure(
-          error:
-              e.response?.data?['message'] ?? e.message ?? 'Failed to add pet',
-          statusCode: e.response?.statusCode?.toString() ?? '0',
-        ),
-      );
+      return Left(_mapDioError(e));
     } catch (e) {
-      return Left(Failure(error: 'Unexpected error: $e'));
+      return Left(Failure(error: 'Authentication error: $e'));
     }
   }
 
-  Future<Either<Failure, PetModel>> updatePet(
+  Future<Either<Failure, PetEntity>> updatePet(
     PetEntity pet,
     List<String>? photoPaths,
     String petId,
   ) async {
     try {
-      final token = await _getAuthToken();
-      final petModel = PetModel(
-        id: pet.id,
-        name: pet.name,
-        breed: pet.breed,
-        age: pet.age,
-        gender: pet.gender,
-        vaccinated: pet.vaccinated,
-        description: pet.description,
-        personality: pet.personality,
-        medicalInfo: pet.medicalInfo,
-        photos: pet.photos,
-        available: pet.available,
-      );
+      await _validateBusinessAuth();
+      final token = await _getBusinessAuthToken();
 
-      final formData = FormData.fromMap(petModel.toJson());
-
-      if (photoPaths != null && photoPaths.isNotEmpty) {
-        for (var path in photoPaths) {
-          formData.files.add(
-            MapEntry(
-              'photos',
-              await MultipartFile.fromFile(
-                path,
-                filename: path.split('/').last,
-              ),
-            ),
-          );
-        }
-      }
-      final url = ApiEndpoints.updatePet(petId);
       final response = await dio.put(
-        url,
-        data: formData,
+        ApiEndpoints.updatePet(petId),
+        data: _buildPetFormData(pet, photoPaths),
         options: Options(
-          headers: {'Authorization': 'Bearer $token'},
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Accept': 'application/json',
+          },
           contentType: null,
         ),
       );
 
       return Right(PetModel.fromJson(response.data['pet']));
     } on DioException catch (e) {
-      return Left(
-        Failure(
-          error:
-              e.response?.data?['message'] ??
-              e.message ??
-              'Failed to update pet',
-          statusCode: e.response?.statusCode?.toString() ?? '0',
+      return Left(_mapDioError(e));
+    } catch (e) {
+      return Left(Failure(error: 'Authentication error: $e'));
+    }
+  }
+
+  Future<Either<Failure, List<PetEntity>>> getPetsByBusiness(
+    String businessId,
+  ) async {
+    try {
+      final token = await _getBusinessAuthToken();
+
+      final response = await dio.get(
+        ApiEndpoints.getPetsByBusiness(businessId),
+        options: Options(
+          headers: token != null ? {'Authorization': 'Bearer $token'} : {},
         ),
       );
-    } catch (e) {
-      return Left(Failure(error: 'Unexpected error: $e'));
+
+      final pets = (response.data['pets'] as List)
+          .map((e) => PetModel.fromJson(e))
+          .toList();
+
+      return Right(pets);
+    } on DioException catch (e) {
+      return Left(_mapDioError(e));
     }
   }
 
   Future<Either<Failure, bool>> deletePet(String petId) async {
     try {
-      final url = ApiEndpoints.deletePet(petId);
-      final token = await _getAuthToken();
-      final response = await dio.delete(
-        url,
+      await _validateBusinessAuth();
+      final token = await _getBusinessAuthToken();
+
+      await dio.delete(
+        ApiEndpoints.deletePet(petId),
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
-      return Right(response.data['success'] ?? false);
+      return const Right(true);
     } on DioException catch (e) {
-      return Left(
-        Failure(
-          error:
-              e.response?.data?['message'] ??
-              e.message ??
-              'Failed to delete pet',
-          statusCode: e.response?.statusCode?.toString() ?? '0',
-        ),
-      );
+      return Left(_mapDioError(e));
     } catch (e) {
-      return Left(Failure(error: 'Unexpected error: $e'));
+      return Left(Failure(error: 'Authentication error: $e'));
     }
   }
 
@@ -238,25 +141,72 @@ class PetsRemoteDataSource {
     bool available,
   ) async {
     try {
-      final token = await _getAuthToken();
-      final response = await dio.patch(
-        '/pets/$petId/status',
+      await _validateBusinessAuth();
+      final token = await _getBusinessAuthToken();
+
+      await dio.patch(
+        "${ApiEndpoints.petsBaseUrl}$petId/status",
         data: {'available': available},
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
-      return Right(response.data['success'] ?? false);
+      return const Right(true);
     } on DioException catch (e) {
-      return Left(
-        Failure(
-          error:
-              e.response?.data?['message'] ??
-              e.message ??
-              'Failed to update pet status',
-          statusCode: e.response?.statusCode?.toString() ?? '0',
-        ),
-      );
+      return Left(_mapDioError(e));
     } catch (e) {
-      return Left(Failure(error: 'Unexpected error: $e'));
+      return Left(Failure(error: 'Authentication error: $e'));
     }
+  }
+
+  // ---------------- HELPERS ----------------
+
+  FormData _buildPetFormData(PetEntity pet, List<String>? photoPaths) {
+    final formData = FormData.fromMap({
+      'name': pet.name,
+      'breed': pet.breed,
+      'age': pet.age,
+      'gender': pet.gender,
+      'vaccinated': pet.vaccinated,
+      'available': pet.available,
+      if (pet.description?.isNotEmpty == true) 'description': pet.description,
+      if (pet.personality?.isNotEmpty == true) 'personality': pet.personality,
+      if (pet.medicalInfo?.isNotEmpty == true) 'medicalInfo': pet.medicalInfo,
+    });
+
+    if (pet.photos != null) {
+      for (final url in pet.photos!) {
+        formData.fields.add(MapEntry('existingPhotos[]', url));
+      }
+    }
+
+    if (photoPaths != null) {
+      for (final path in photoPaths) {
+        formData.files.add(
+          MapEntry('photos', MultipartFile.fromFileSync(path)),
+        );
+      }
+    }
+
+    return formData;
+  }
+
+  Failure _mapDioError(DioException e) {
+    if (e.response != null) {
+      if (e.response?.statusCode == 401) {
+        return Failure(error: 'Session expired. Please login again.');
+      }
+
+      return Failure(
+        error:
+            e.response?.data?['message'] ??
+            'Request failed with status ${e.response?.statusCode}',
+      );
+    }
+
+    if (e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.receiveTimeout) {
+      return Failure(error: 'Connection timeout');
+    }
+
+    return Failure(error: 'No internet connection');
   }
 }

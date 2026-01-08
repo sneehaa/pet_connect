@@ -51,4 +51,5 @@ class AppStyles {
     fontSize: 18,
     color: AppColors.errorRed,
   );
+ 
 }

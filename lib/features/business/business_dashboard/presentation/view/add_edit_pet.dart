@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-// Note: Assuming these imports work correctly in the user's project setup
 import 'package:pet_connect/config/themes/app_colors.dart';
 import 'package:pet_connect/config/themes/app_styles.dart';
 import 'package:pet_connect/core/utils/snackbar_utils.dart';
@@ -33,8 +32,8 @@ class _AddEditPetScreenState extends ConsumerState<AddEditPetScreen> {
   bool _isVaccinated = false;
   bool _isAvailable = true;
 
-  final List<File> _newPhotos = [];
   List<String> _existingPhotos = [];
+  final List<File> _newPhotos = [];
 
   final ImagePicker _picker = ImagePicker();
 
@@ -94,232 +93,224 @@ class _AddEditPetScreenState extends ConsumerState<AddEditPetScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
           child: Form(
             key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 1. Custom Header
-                _buildCustomHeader(context),
-                const SizedBox(height: 30),
+            child: GestureDetector(
+              onTap: () {
+                FocusScope.of(context).unfocus();
+              },
+              behavior: HitTestBehavior.opaque,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildCustomHeader(context),
+                  const SizedBox(height: 30),
 
-                // 2. Photos Section
-                _buildSectionTitle(
-                  title: 'Pet Photos',
-                  icon: Icons.photo_library_outlined,
-                ),
-                const SizedBox(height: 15),
-                SizedBox(
-                  height: 140,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _existingPhotos.length + _newPhotos.length + 1,
-                    itemBuilder: (context, index) {
-                      if (index == 0) return _buildAddPhotoButton();
-                      if (index <= _existingPhotos.length) {
-                        // Existing photos
-                        return _buildExistingPhotoPreview(index - 1);
-                      } else {
-                        // New photos
-                        return _buildNewPhotoPreview(
-                          index - _existingPhotos.length - 1,
-                        );
-                      }
-                    },
+                  _buildSectionTitle(
+                    title: 'Pet Photos',
+                    icon: Icons.photo_library_outlined,
                   ),
-                ),
-                const SizedBox(height: 35),
-
-                // 3. Basic Information Section
-                _buildSectionTitle(
-                  title: 'Basic Details',
-                  icon: Icons.info_outline,
-                ),
-                _buildSectionWrapper(
-                  children: [
-                    // Name
-                    _buildTextField(
-                      controller: _nameController,
-                      label: 'Pet Name',
-                      hintText: 'Max, Bella, Charlie...',
-                      icon: Icons.tag,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter pet name';
+                  const SizedBox(height: 15),
+                  SizedBox(
+                    height: 140,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: 1 + _existingPhotos.length + _newPhotos.length,
+                      itemBuilder: (context, index) {
+                        if (index == 0) return _buildAddPhotoButton();
+                        if (index <= _existingPhotos.length) {
+                          return _buildExistingPhotoPreview(index - 1);
+                        } else {
+                          return _buildNewPhotoPreview(
+                            index - _existingPhotos.length - 1,
+                          );
                         }
-                        return null;
                       },
                     ),
-                    const SizedBox(height: 20),
-
-                    // Breed
-                    _buildTextField(
-                      controller: _breedController,
-                      label: 'Breed',
-                      hintText: 'Golden Retriever, Siamese...',
-                      icon: Icons.category_outlined,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter breed';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 20),
-
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Age
-                        Expanded(
-                          child: _buildTextField(
-                            controller: _ageController,
-                            label: 'Age (Months)',
-                            hintText: '3',
-                            icon: Icons.calendar_today_outlined,
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter age';
-                              }
-                              if (int.tryParse(value) == null) {
-                                return 'Please enter valid number';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 15),
-
-                        // Gender
-                        Expanded(child: _buildGenderDropdown()),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 35),
-
-                // 4. Status Toggles Section
-                _buildSectionTitle(
-                  title: 'Status & Health',
-                  icon: Icons.check_circle_outline,
-                ),
-                _buildSectionWrapper(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 15,
-                    vertical: 10,
                   ),
-                  children: [
-                    // Vaccinated
-                    _buildToggleSwitch(
-                      title: 'Vaccinated',
-                      subtitle: 'Pet has up-to-date vaccinations',
-                      value: _isVaccinated,
-                      onChanged: (value) {
-                        setState(() {
-                          _isVaccinated = value;
-                        });
-                      },
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8.0),
-                      child: Divider(
-                        color: AppColors.backgroundGrey,
-                        height: 1,
-                        thickness: 1,
-                      ),
-                    ),
-                    // Available
-                    _buildToggleSwitch(
-                      title: 'Available for Adoption',
-                      value: _isAvailable,
-                      onChanged: (value) {
-                        setState(() {
-                          _isAvailable = value;
-                        });
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 35),
 
-                // 5. Detailed Information Section
-                _buildSectionTitle(
-                  title: 'Personality & Medical',
-                  icon: Icons.description_outlined,
-                ),
-                _buildSectionWrapper(
-                  children: [
-                    // Personality
-                    _buildTextField(
-                      controller: _personalityController,
-                      label: 'Personality & Temperament',
-                      hintText: 'Friendly, playful, calm, loves kids, etc.',
-                      icon: Icons.emoji_emotions_outlined,
-                      maxLines: 3,
-                    ),
-                    const SizedBox(height: 20),
+                  const SizedBox(height: 35),
 
-                    // Description
-                    _buildTextField(
-                      controller: _descriptionController,
-                      label: 'Description',
-                      hintText: 'Tell us about your pet, their story, etc.',
-                      icon: Icons.text_snippet_outlined,
-                      maxLines: 4,
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Medical Information
-                    _buildTextField(
-                      controller: _medicalController,
-                      label: 'Medical Information (Optional)',
-                      hintText: 'Any medical conditions or special needs',
-                      icon: Icons.medical_services_outlined,
-                      maxLines: 3,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 40),
-
-                state.isLoading
-                    ? Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.primaryOrange,
-                        ),
-                      )
-                    : ElevatedButton(
-                        onPressed: () {
-                          if (_formKey.currentState!.validate() &&
-                              _selectedGender != null) {
-                            _savePet();
-                          } else if (_selectedGender == null) {
-                            showSnackBar(
-                              context: context,
-                              message: 'Please select gender',
-                              isSuccess: false,
-                            );
+                  _buildSectionTitle(
+                    title: 'Basic Details',
+                    icon: Icons.info_outline,
+                  ),
+                  _buildSectionWrapper(
+                    children: [
+                      _buildTextField(
+                        controller: _nameController,
+                        label: 'Pet Name',
+                        hintText: 'Max, Bella, Charlie...',
+                        icon: Icons.tag,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter pet name';
                           }
+                          return null;
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryOrange,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
+                      ),
+                      const SizedBox(height: 20),
+
+                      _buildTextField(
+                        controller: _breedController,
+                        label: 'Breed',
+                        hintText: 'Golden Retriever, Siamese...',
+                        icon: Icons.category_outlined,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter breed';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 20),
+
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: _buildTextField(
+                              controller: _ageController,
+                              label: 'Age (Months)',
+                              hintText: '3',
+                              icon: Icons.calendar_today_outlined,
+                              keyboardType: TextInputType.number,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter age';
+                                }
+                                if (int.tryParse(value) == null) {
+                                  return 'Please enter valid number';
+                                }
+                                return null;
+                              },
+                            ),
                           ),
-                          minimumSize: const Size(double.infinity, 58),
-                          elevation: 8,
-                          shadowColor: AppColors.primaryOrange.withOpacity(0.5),
-                        ),
-                        child: Text(
-                          widget.pet == null
-                              ? 'CREATE NEW PET PROFILE'
-                              : 'UPDATE PET PROFILE',
-                          style: AppStyles.button.copyWith(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          const SizedBox(width: 15),
+                          Expanded(child: _buildGenderDropdown()),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 35),
+
+                  _buildSectionTitle(
+                    title: 'Status & Health',
+                    icon: Icons.check_circle_outline,
+                  ),
+                  _buildSectionWrapper(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 15,
+                      vertical: 10,
+                    ),
+                    children: [
+                      _buildToggleSwitch(
+                        title: 'Vaccinated',
+                        subtitle: 'Pet has up-to-date vaccinations',
+                        value: _isVaccinated,
+                        onChanged: (value) {
+                          setState(() {
+                            _isVaccinated = value;
+                          });
+                        },
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8.0),
+                        child: Divider(
+                          color: AppColors.backgroundGrey,
+                          height: 1,
+                          thickness: 1,
                         ),
                       ),
-                const SizedBox(height: 20),
-              ],
+                      _buildToggleSwitch(
+                        title: 'Available for Adoption',
+                        value: _isAvailable,
+                        onChanged: (value) {
+                          setState(() {
+                            _isAvailable = value;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 35),
+
+                  _buildSectionTitle(
+                    title: 'Personality & Medical',
+                    icon: Icons.description_outlined,
+                  ),
+                  _buildSectionWrapper(
+                    children: [
+                      _buildTextField(
+                        controller: _personalityController,
+                        label: 'Personality & Temperament',
+                        hintText: 'Friendly, playful, calm, loves kids, etc.',
+                        icon: Icons.emoji_emotions_outlined,
+                        maxLines: 3,
+                      ),
+                      const SizedBox(height: 20),
+
+                      _buildTextField(
+                        controller: _descriptionController,
+                        label: 'Description',
+                        hintText: 'Tell us about your pet, their story, etc.',
+                        icon: Icons.text_snippet_outlined,
+                        maxLines: 4,
+                      ),
+                      const SizedBox(height: 20),
+
+                      _buildTextField(
+                        controller: _medicalController,
+                        label: 'Medical Information (Optional)',
+                        hintText: 'Any medical conditions or special needs',
+                        icon: Icons.medical_services_outlined,
+                        maxLines: 3,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 40),
+
+                  state.isLoading
+                      ? Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.primaryOrange,
+                          ),
+                        )
+                      : ElevatedButton(
+                          onPressed: () {
+                            if (_formKey.currentState!.validate() &&
+                                _selectedGender != null) {
+                              _savePet();
+                            } else if (_selectedGender == null) {
+                              showSnackBar(
+                                context: context,
+                                message: 'Please select gender',
+                                isSuccess: false,
+                              );
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryOrange,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            minimumSize: const Size(double.infinity, 58),
+                            elevation: 8,
+                            shadowColor: AppColors.primaryOrange.withOpacity(
+                              0.5,
+                            ),
+                          ),
+                          child: Text(
+                            widget.pet == null
+                                ? 'CREATE NEW PET PROFILE'
+                                : 'UPDATE PET PROFILE',
+                            style: AppStyles.button.copyWith(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
           ),
         ),
@@ -599,7 +590,11 @@ class _AddEditPetScreenState extends ConsumerState<AddEditPetScreen> {
               const SizedBox(height: 8),
               Text(
                 'Add Photo',
-                style: AppStyles.body.copyWith(color: AppColors.primaryOrange),
+                style: AppStyles.body.copyWith(
+                  color: AppColors.primaryOrange,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
@@ -628,15 +623,7 @@ class _AddEditPetScreenState extends ConsumerState<AddEditPetScreen> {
           right: 10,
           child: GestureDetector(
             onTap: () => setState(() => _existingPhotos.removeAt(index)),
-            child: CircleAvatar(
-              radius: 12,
-              backgroundColor: AppColors.errorRed,
-              child: const Icon(
-                Icons.close,
-                color: AppColors.primaryWhite,
-                size: 14,
-              ),
-            ),
+            child: _buildRemoveIcon(),
           ),
         ),
       ],
@@ -663,18 +650,22 @@ class _AddEditPetScreenState extends ConsumerState<AddEditPetScreen> {
           right: 10,
           child: GestureDetector(
             onTap: () => setState(() => _newPhotos.removeAt(index)),
-            child: CircleAvatar(
-              radius: 12,
-              backgroundColor: AppColors.errorRed,
-              child: const Icon(
-                Icons.close,
-                color: AppColors.primaryWhite,
-                size: 14,
-              ),
-            ),
+            child: _buildRemoveIcon(),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildRemoveIcon() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.errorRed,
+        shape: BoxShape.circle,
+        border: Border.all(color: AppColors.primaryWhite, width: 2),
+      ),
+      child: const Icon(Icons.close, color: AppColors.primaryWhite, size: 14),
     );
   }
 
@@ -693,35 +684,50 @@ class _AddEditPetScreenState extends ConsumerState<AddEditPetScreen> {
     }
   }
 
-  void _savePet() {
-    final pet = PetEntity(
-      id: widget.pet?.id,
-      name: _nameController.text.trim(),
-      breed: _breedController.text.trim(),
-      age: int.parse(_ageController.text.trim()),
-      gender: _selectedGender!,
-      vaccinated: _isVaccinated,
-      description: _descriptionController.text.trim().isEmpty
-          ? null
-          : _descriptionController.text.trim(),
-      personality: _personalityController.text.trim().isEmpty
-          ? null
-          : _personalityController.text.trim(),
-      medicalInfo: _medicalController.text.trim().isEmpty
-          ? null
-          : _medicalController.text.trim(),
-      photos: _existingPhotos, 
-      available: _isAvailable,
-    );
+  void _savePet() async {
+    if (_formKey.currentState!.validate() && _selectedGender != null) {
+      // Convert File objects to file paths for new photos
+      final newPhotoPaths = _newPhotos.map((file) => file.path).toList();
 
-    final newPhotoPaths = _newPhotos.map((file) => file.path).toList();
-
-    if (widget.pet == null) {
-      ref.read(petViewModelProvider.notifier).addPet(pet, newPhotoPaths);
+      // Create PetEntity with existing photos only (URLs from Cloudinary)
+      final pet = PetEntity(
+        id: widget.pet?.id,
+        name: _nameController.text.trim(),
+        breed: _breedController.text.trim(),
+        age: int.parse(_ageController.text.trim()),
+        gender: _selectedGender!,
+        vaccinated: _isVaccinated,
+        description: _descriptionController.text.trim().isEmpty
+            ? null
+            : _descriptionController.text.trim(),
+        personality: _personalityController.text.trim().isEmpty
+            ? null
+            : _personalityController.text.trim(),
+        medicalInfo: _medicalController.text.trim().isEmpty
+            ? null
+            : _medicalController.text.trim(),
+        photos: _existingPhotos, // Only existing Cloudinary URLs
+        available: _isAvailable,
+      );
+      if (widget.pet == null) {
+        await ref
+            .read(petViewModelProvider.notifier)
+            .addPet(pet, newPhotoPaths.isEmpty ? null : newPhotoPaths);
+      } else {
+        await ref
+            .read(petViewModelProvider.notifier)
+            .updatePet(
+              pet,
+              newPhotoPaths.isEmpty ? null : newPhotoPaths,
+              widget.pet!.id!,
+            );
+      }
     } else {
-      ref
-          .read(petViewModelProvider.notifier)
-          .updatePet(pet, newPhotoPaths, widget.pet!.id!);
+      showSnackBar(
+        context: context,
+        message: 'Please fill all required fields and select gender',
+        isSuccess: false,
+      );
     }
   }
 }

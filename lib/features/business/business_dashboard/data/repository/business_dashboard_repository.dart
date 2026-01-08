@@ -34,18 +34,19 @@ class BusinessDashboardRemoteRepository implements BusinessDashboardRepository {
   @override
   Future<Either<Failure, PetEntity>> addPet(
     PetEntity pet,
-    List<String>? photos,
+    List<String>? photoPaths, 
   ) {
-    return _remoteDataSource.addPet(pet, photos);
+    return _remoteDataSource.addPet(pet, photoPaths);
   }
 
   @override
   Future<Either<Failure, PetEntity>> updatePet(
     PetEntity pet,
-    List<String>? photos,
+    List<String>? photoPaths,
     String petId,
   ) {
-    return _remoteDataSource.updatePet(pet, photos, petId);
+    // Just pass everything to remote data source
+    return _remoteDataSource.updatePet(pet, photoPaths, petId);
   }
 
   @override
