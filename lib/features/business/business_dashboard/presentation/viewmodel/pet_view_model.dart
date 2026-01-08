@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:pet_connect/features/business/business_dashboard/domain/entity/pet_entity.dart';
@@ -7,7 +5,6 @@ import 'package:pet_connect/features/business/business_dashboard/domain/use_case
 
 import '../state/pet_state.dart';
 
-// Create a unified Pet UseCases provider
 final petUseCasesProvider = Provider.autoDispose<PetUseCases>((ref) {
   return PetUseCases(
     getPets: ref.read(getPetsUseCaseProvider),
@@ -44,7 +41,6 @@ class PetViewModel extends StateNotifier<PetState> {
   final PetUseCases _useCases;
 
   PetViewModel(this._useCases) : super(const PetState());
-
 
   Future<void> loadPets(String businessId) async {
     state = state.copyWith(status: PetStatus.loading, message: null);
@@ -157,21 +153,6 @@ class PetViewModel extends StateNotifier<PetState> {
         }
       },
     );
-  }
-
-  // Add this inside PetViewModel class (anywhere, but not touching existing methods)
-  Future<List<String>> _uploadPhotos(List<File> photos) async {
-    List<String> urls = [];
-    for (var photo in photos) {
-      final url = await _uploadFile(photo);
-      urls.add(url);
-    }
-    return urls;
-  }
-
-  Future<String> _uploadFile(File file) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    return "https://example.com/${file.path.split('/').last}";
   }
 
   /// Reset state

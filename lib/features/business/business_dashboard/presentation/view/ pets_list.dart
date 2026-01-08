@@ -12,7 +12,6 @@ import 'package:pet_connect/features/business/business_dashboard/presentation/vi
 import 'package:pet_connect/widgets/pet_widgets/delete_confirmatrion_dialogue.dart';
 import 'package:pet_connect/widgets/pet_widgets/pet_actions_bottom_sheet.dart';
 import 'package:pet_connect/widgets/pet_widgets/pet_card.dart';
-import 'package:pet_connect/widgets/pet_widgets/pet_list_header.dart';
 
 class PetListScreen extends ConsumerStatefulWidget {
   const PetListScreen({super.key});
@@ -389,15 +388,6 @@ class _PetListScreenState extends ConsumerState<PetListScreen> {
   Widget _buildPetList(PetState state) {
     return Column(
       children: [
-        // Header - Using extracted widget
-        PetListHeader(
-          petCount: state.pets.length,
-          onFilterPressed: () {
-            // TODO: Implement filter functionality
-            print('Filter pressed');
-          },
-        ),
-        // Pet List
         Expanded(
           child: RefreshIndicator(
             onRefresh: () async {
