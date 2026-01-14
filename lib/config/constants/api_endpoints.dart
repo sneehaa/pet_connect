@@ -18,6 +18,15 @@ class ApiEndpoints {
   static const String businessDocuments = "${businessBaseUrl}upload-documents";
   static const String businessNearby = "${businessBaseUrl}nearby";
 
+  // NEW BUSINESS PROFILE ENDPOINTS
+  static const String businessMe = "${businessBaseUrl}me";
+  static const String updateBusinessProfile =
+      "${businessBaseUrl}update-profile";
+
+  // Business details by ID (public endpoint)
+  static String getBusinessDetails(String businessId) =>
+      "$businessBaseUrl$businessId";
+
   // Pets service URL
   static const String petsBaseUrl = "http://192.168.68.106:5502/api/pets/";
 

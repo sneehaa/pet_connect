@@ -3,6 +3,7 @@ import 'package:pet_connect/config/themes/app_colors.dart';
 import 'package:pet_connect/config/themes/app_styles.dart';
 import 'package:pet_connect/features/business/business_dashboard/presentation/view/%20pets_list.dart';
 import 'package:pet_connect/features/business/business_dashboard/presentation/view/adoption_requests_list.dart';
+import 'package:pet_connect/features/business/business_profile/presentation/view/business_profile.dart';
 
 class BusinessDashboardScreen extends StatefulWidget {
   const BusinessDashboardScreen({super.key});
@@ -51,16 +52,12 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // 1. Set Scaffold background to the desired yellow color
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          // The SizedBox(height: 50) in the AppBar already provides top padding,
-          // so we don't strictly need a top SafeArea, but the padding in the AppBar is kept.
           _buildCustomAppBar(),
           Expanded(
             child: Container(
-              // 2. Ensure the expanded content area also confirms the background color
               color: AppColors.background,
               child: _getSelectedPage(),
             ),
@@ -95,8 +92,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // This SizedBox acts as the replacement for top SafeArea padding
-                  SizedBox(height: 50),
+                  const SizedBox(height: 50),
                   Text(
                     'Welcome back,',
                     style: AppStyles.small.copyWith(
@@ -233,7 +229,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
           child: AdoptionRequestsScreen(),
         );
       case 3:
-        return _buildProfilePage();
+        return const BusinessProfileScreen();
       default:
         return _buildHomePage();
     }
@@ -307,93 +303,6 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: AppColors.primaryWhite,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProfilePage() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 150,
-              height: 150,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.primaryOrange.withOpacity(0.15),
-                    AppColors.primaryOrange.withOpacity(0.05),
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primaryOrange.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: Center(
-                child: Image.asset(
-                  _screenData[3]['icon_asset'] as String,
-                  height: 60,
-                  color: AppColors.primaryOrange,
-                ),
-              ),
-            ),
-            const SizedBox(height: 30),
-            Text(
-              'Business Profile',
-              textAlign: TextAlign.center,
-              style: AppStyles.headline3.copyWith(
-                fontSize: 26,
-                fontWeight: FontWeight.w700,
-                color: _textDeepDark,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30.0),
-              child: Text(
-                'Manage your company details, operational hours, contact information, and account settings.',
-                textAlign: TextAlign.center,
-                style: AppStyles.body.copyWith(
-                  fontSize: 16,
-                  color: AppColors.textLightGrey.withOpacity(0.9),
-                  height: 1.4,
-                ),
-              ),
-            ),
-            const SizedBox(height: 40),
-            OutlinedButton(
-              onPressed: () {},
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: AppColors.primaryOrange, width: 2),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 30,
-                  vertical: 15,
-                ),
-              ),
-              child: Text(
-                'Edit Information',
-                style: AppStyles.button.copyWith(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primaryOrange,
                 ),
               ),
             ),

@@ -9,9 +9,9 @@ import 'package:pet_connect/features/business/business_dashboard/presentation/st
 import 'package:pet_connect/features/business/business_dashboard/presentation/view/add_edit_pet.dart';
 import 'package:pet_connect/features/business/business_dashboard/presentation/view/adoption_requests_list.dart';
 import 'package:pet_connect/features/business/business_dashboard/presentation/viewmodel/pet_view_model.dart';
-import 'package:pet_connect/widgets/pet_widgets/delete_confirmatrion_dialogue.dart';
-import 'package:pet_connect/widgets/pet_widgets/pet_actions_bottom_sheet.dart';
-import 'package:pet_connect/widgets/pet_widgets/pet_card.dart';
+import 'package:pet_connect/features/business/business_dashboard/presentation/view/pet_widgets/delete_confirmatrion_dialogue.dart';
+import 'package:pet_connect/features/business/business_dashboard/presentation/view/pet_widgets/pet_actions_bottom_sheet.dart';
+import 'package:pet_connect/features/business/business_dashboard/presentation/view/pet_widgets/pet_card.dart';
 
 class PetListScreen extends ConsumerStatefulWidget {
   const PetListScreen({super.key});
