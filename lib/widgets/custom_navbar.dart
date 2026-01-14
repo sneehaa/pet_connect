@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 
 class CustomBottomNavBar extends StatefulWidget {
-  const CustomBottomNavBar({super.key});
+  final int currentIndex;
+  final Function(int) onTabChanged;
+
+  const CustomBottomNavBar({
+    super.key,
+    required this.currentIndex,
+    required this.onTabChanged,
+  });
 
   @override
   State<CustomBottomNavBar> createState() => _CustomBottomNavBarState();
 }
 
 class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
-  int _selectedIndex = 0;
-
   final List<String> icons = [
     'assets/icons/home.png',
     'assets/icons/favorite.png',
@@ -38,9 +43,9 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: List.generate(icons.length, (index) {
-          bool isSelected = _selectedIndex == index;
+          bool isSelected = widget.currentIndex == index;
           return GestureDetector(
-            onTap: () => setState(() => _selectedIndex = index),
+            onTap: () => widget.onTabChanged(index),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 250),
               width: 60,

@@ -5,16 +5,17 @@ import 'package:pet_connect/config/themes/app_styles.dart';
 import 'package:pet_connect/features/user/pets/domain/entity/pet_entity.dart';
 import 'package:pet_connect/features/user/pets/presentation/viewmodel/pet_viewmodel.dart';
 
-class PetDetailScreen extends ConsumerStatefulWidget {
+class UserPetDetailScreen extends ConsumerStatefulWidget {
   final String petId;
 
-  const PetDetailScreen({super.key, required this.petId});
+  const UserPetDetailScreen({super.key, required this.petId});
 
   @override
-  ConsumerState<PetDetailScreen> createState() => _PetDetailScreenState();
+  ConsumerState<UserPetDetailScreen> createState() =>
+      _UserPetDetailScreenState();
 }
 
-class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
+class _UserPetDetailScreenState extends ConsumerState<UserPetDetailScreen> {
   @override
   void initState() {
     super.initState();

@@ -2,7 +2,7 @@ import '../../domain/entity/pet_entity.dart';
 
 class UserPetModel extends UserPetEntity {
   const UserPetModel({
-    super.id,
+    required super.id,
     required super.name,
     required super.breed,
     required super.age,
@@ -41,6 +41,7 @@ class UserPetModel extends UserPetEntity {
     );
   }
 
+  @override
   Map<String, dynamic> toJson() {
     return {
       'name': name,

@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 class UserPetEntity extends Equatable {
-  final String? id;
+  final String id;
   final String name;
   final String breed;
   final int age;
@@ -17,7 +17,7 @@ class UserPetEntity extends Equatable {
   final DateTime? updatedAt;
 
   const UserPetEntity({
-    this.id,
+    required this.id,
     required this.name,
     required this.breed,
     required this.age,
