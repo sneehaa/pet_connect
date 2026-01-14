@@ -4,10 +4,20 @@ class ApiEndpoints {
   static const Duration connectionTimeout = Duration(seconds: 1000);
   static const Duration receiveTimeout = Duration(seconds: 1000);
 
-  // User service URL
-  static const String userBaseUrl = "http://192.168.68.106:5500/api/user/";
-  static const String userLogin = "${userBaseUrl}login";
+  // Base URL - Update this to your actual IP
+  static const String baseUrl = "http://192.168.68.106:5500";
+
+  // User service endpoints
+  static const String userBaseUrl = "$baseUrl/api/user/";
   static const String userRegister = "${userBaseUrl}register";
+  static const String userLogin = "${userBaseUrl}login";
+  static String getUserProfile(String userId) =>
+      "${userBaseUrl}profile/$userId";
+  static String editUserProfile(String userId) => "${userBaseUrl}edit/$userId";
+  static const String getAllUsers = "${userBaseUrl}getAll";
+  static String deleteUserAccount(String userId) =>
+      "${userBaseUrl}delete/$userId";
+  static const String sendOTP = "${userBaseUrl}sendOTP";
 
   // Business service URL
   static const String businessBaseUrl =
@@ -17,8 +27,6 @@ class ApiEndpoints {
   static const String businessProfile = "${businessBaseUrl}profile";
   static const String businessDocuments = "${businessBaseUrl}upload-documents";
   static const String businessNearby = "${businessBaseUrl}nearby";
-
-  // NEW BUSINESS PROFILE ENDPOINTS
   static const String businessMe = "${businessBaseUrl}me";
   static const String updateBusinessProfile =
       "${businessBaseUrl}update-profile";
@@ -40,4 +48,31 @@ class ApiEndpoints {
   static String createPet() => petsBaseUrl;
   static String updatePet(String petId) => "$petsBaseUrl$petId";
   static String deletePet(String petId) => "$petsBaseUrl$petId";
+
+  // Adoption service URL
+  static const String adoptionBaseUrl =
+      "http://192.168.68.106:5503/api/adoptions/";
+  static String applyForAdoption(String petId) =>
+      "${adoptionBaseUrl}pets/$petId/adopt";
+  static String getAdoptionStatus(String petId) =>
+      "${adoptionBaseUrl}pets/$petId/status";
+  static const String getUserAdoptions = "${adoptionBaseUrl}history";
+  static String getPetAdoptions(String petId) =>
+      "${adoptionBaseUrl}pets/$petId";
+  static String updateAdoptionStatus(String adoptionId) =>
+      "$adoptionBaseUrl$adoptionId/status";
+  static String markAdoptionPaid(String adoptionId) =>
+      "$adoptionBaseUrl$adoptionId/mark-paid";
+  static String getAdoptionById(String adoptionId) =>
+      "$adoptionBaseUrl$adoptionId";
+
+  // Payment service URL
+  static const String paymentBaseUrl =
+      "http://192.168.68.106:5504/api/payments/";
+  static const String initiatePayment = "${paymentBaseUrl}khalti/initiate";
+  static const String verifyPayment = "${paymentBaseUrl}khalti/verify";
+  static const String getUserPayments =
+      "${paymentBaseUrl}transactions/my-history";
+  static String getReceipt(String paymentId) =>
+      "${paymentBaseUrl}receipts/$paymentId";
 }
