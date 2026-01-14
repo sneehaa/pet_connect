@@ -11,7 +11,7 @@ final businessRemoteRepositoryProvider = Provider<BusinessRepository>(
 );
 
 class BusinessRemoteRepository implements BusinessRepository {
-final BusinessRemoteDataSource _remoteDataSource;
+  final BusinessRemoteDataSource _remoteDataSource;
 
   BusinessRemoteRepository(this._remoteDataSource);
 
@@ -34,11 +34,7 @@ final BusinessRemoteDataSource _remoteDataSource;
   }
 
   @override
-  Future<Either<Failure, List<dynamic>>> getNearby(
-    double latitude,
-    double longitude,
-  ) {
-    return _remoteDataSource.getNearby(latitude, longitude);
+  Future<Either<Failure, bool>> uploadProfileImage(String imagePath) {
+    return _remoteDataSource.uploadProfileImage(imagePath);
   }
-  
 }

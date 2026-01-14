@@ -1,6 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:pet_connect/config/themes/app_colors.dart';
 import 'package:pet_connect/config/themes/app_styles.dart';
 import 'package:pet_connect/core/utils/snackbar_utils.dart';
@@ -8,7 +10,6 @@ import 'package:pet_connect/features/business/business_auth/domain/entity/busine
 import 'package:pet_connect/features/business/business_auth/presentation/auth_viewmodel/auth_viewmodel.dart';
 import 'package:pet_connect/features/business/business_auth/presentation/state/auth_state.dart';
 import 'package:pet_connect/features/business/business_auth/presentation/view/upload_document.dart';
-import 'package:pet_connect/features/user/auth/presentation/auth_viewmodel/auth_viewmodel.dart';
 import 'package:pet_connect/features/user/auth/presentation/view/login_view.dart';
 
 class BusinessSignupScreen extends ConsumerStatefulWidget {
@@ -27,6 +28,22 @@ class _BusinessSignupScreenState extends ConsumerState<BusinessSignupScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
+
+  File? _profileImage;
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImage() async {
+    final XFile? image = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+
+    if (image != null) {
+      setState(() {
+        _profileImage = File(image.path);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +72,7 @@ class _BusinessSignupScreenState extends ConsumerState<BusinessSignupScreen> {
       }
     });
 
-    final state = ref.watch(authViewModelProvider);
+    final state = ref.watch(businessViewModelProvider);
 
     return Scaffold(
       backgroundColor: AppColors.primaryWhite,
@@ -87,77 +104,104 @@ class _BusinessSignupScreenState extends ConsumerState<BusinessSignupScreen> {
                         'Please enter your details',
                         style: AppStyles.subtitle,
                       ),
-                      const SizedBox(height: 40),
+
+                      // Improved Profile Image Upload Section
+                      const SizedBox(height: 24),
+                      Stack(
+                        children: [
+                          Container(
+                            width: 130,
+                            height: 130,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.backgroundGrey.withOpacity(0.5),
+                              border: Border.all(
+                                color: AppColors.primaryOrange,
+                                width: 3,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primaryOrange.withOpacity(
+                                    0.2,
+                                  ),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: _profileImage == null
+                                ? Icon(
+                                    Icons.business,
+                                    size: 60,
+                                    color: AppColors.textLightGrey.withOpacity(
+                                      0.6,
+                                    ),
+                                  )
+                                : ClipRRect(
+                                    borderRadius: BorderRadius.circular(65),
+                                    child: Image.file(
+                                      _profileImage!,
+                                      fit: BoxFit.cover,
+                                      width: 130,
+                                      height: 130,
+                                    ),
+                                  ),
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: GestureDetector(
+                              onTap: _pickImage,
+                              child: Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryOrange,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: AppColors.primaryWhite,
+                                    width: 3,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.2),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(
+                                  Icons.camera_alt,
+                                  color: AppColors.primaryWhite,
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 30),
                       Form(
                         key: _formKey,
                         child: Column(
                           children: [
-                            TextFormField(
+                            _buildTextField(
                               controller: _businessNameController,
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: AppColors.backgroundGrey.withOpacity(
-                                  0.45,
-                                ),
-                                labelText: 'Business Name',
-                                labelStyle: GoogleFonts.alice(
-                                  fontSize: 18,
-                                  color: AppColors.textLightGrey,
-                                ),
-                                prefixIcon: Padding(
-                                  padding: const EdgeInsets.all(12.0),
-                                  child: Image.asset(
-                                    'assets/icons/user.png',
-                                    width: 24,
-                                    height: 24,
-                                  ),
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 18,
-                                ),
-                              ),
+                              labelText: 'Business Name',
+                              iconPath: 'assets/icons/user.png',
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'Please enter your full name';
+                                  return 'Please enter business name';
                                 }
                                 return null;
                               },
                             ),
-                            const SizedBox(height: 10),
-                            TextFormField(
+                            const SizedBox(height: 12),
+                            _buildTextField(
                               controller: _usernameController,
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: AppColors.backgroundGrey.withOpacity(
-                                  0.45,
-                                ),
-                                labelText: 'Username',
-                                labelStyle: GoogleFonts.alice(
-                                  fontSize: 18,
-                                  color: AppColors.textLightGrey,
-                                ),
-                                prefixIcon: Padding(
-                                  padding: const EdgeInsets.all(12.0),
-                                  child: Image.asset(
-                                    'assets/icons/user.png',
-                                    width: 24,
-                                    height: 24,
-                                  ),
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 18,
-                                ),
-                              ),
+                              labelText: 'Username',
+                              iconPath: 'assets/icons/user.png',
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
                                   return 'Please enter a username';
@@ -165,36 +209,11 @@ class _BusinessSignupScreenState extends ConsumerState<BusinessSignupScreen> {
                                 return null;
                               },
                             ),
-                            const SizedBox(height: 10),
-                            TextFormField(
+                            const SizedBox(height: 12),
+                            _buildTextField(
                               controller: _emailController,
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: AppColors.backgroundGrey.withOpacity(
-                                  0.45,
-                                ),
-                                labelText: 'Email',
-                                labelStyle: GoogleFonts.alice(
-                                  fontSize: 18,
-                                  color: AppColors.textLightGrey,
-                                ),
-                                prefixIcon: Padding(
-                                  padding: const EdgeInsets.all(12.0),
-                                  child: Image.asset(
-                                    'assets/icons/email.png',
-                                    width: 24,
-                                    height: 24,
-                                  ),
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 18,
-                                ),
-                              ),
+                              labelText: 'Email',
+                              iconPath: 'assets/icons/email.png',
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
                                   return 'Please enter your email';
@@ -205,37 +224,12 @@ class _BusinessSignupScreenState extends ConsumerState<BusinessSignupScreen> {
                                 return null;
                               },
                             ),
-                            const SizedBox(height: 10),
-                            TextFormField(
+                            const SizedBox(height: 12),
+                            _buildTextField(
                               controller: _passwordController,
+                              labelText: 'Password',
+                              iconPath: 'assets/icons/password.png',
                               obscureText: true,
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: AppColors.backgroundGrey.withOpacity(
-                                  0.45,
-                                ),
-                                labelText: 'Password',
-                                labelStyle: GoogleFonts.alice(
-                                  fontSize: 18,
-                                  color: AppColors.textLightGrey,
-                                ),
-                                prefixIcon: Padding(
-                                  padding: const EdgeInsets.all(12.0),
-                                  child: Image.asset(
-                                    'assets/icons/password.png',
-                                    width: 24,
-                                    height: 24,
-                                  ),
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 18,
-                                ),
-                              ),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
                                   return 'Please enter your password';
@@ -246,36 +240,11 @@ class _BusinessSignupScreenState extends ConsumerState<BusinessSignupScreen> {
                                 return null;
                               },
                             ),
-                            const SizedBox(height: 10),
-                            TextFormField(
+                            const SizedBox(height: 12),
+                            _buildTextField(
                               controller: _phoneNumberController,
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: AppColors.backgroundGrey.withOpacity(
-                                  0.45,
-                                ),
-                                labelText: 'Phone Number',
-                                labelStyle: GoogleFonts.alice(
-                                  fontSize: 18,
-                                  color: AppColors.textLightGrey,
-                                ),
-                                prefixIcon: Padding(
-                                  padding: const EdgeInsets.all(12.0),
-                                  child: Image.asset(
-                                    'assets/icons/phone.png',
-                                    width: 24,
-                                    height: 24,
-                                  ),
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 18,
-                                ),
-                              ),
+                              labelText: 'Phone Number',
+                              iconPath: 'assets/icons/phone.png',
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
                                   return 'Please enter your phone number';
@@ -283,40 +252,23 @@ class _BusinessSignupScreenState extends ConsumerState<BusinessSignupScreen> {
                                 return null;
                               },
                             ),
-                            const SizedBox(height: 10),
-                            TextFormField(
+                            const SizedBox(height: 12),
+                            _buildTextField(
                               controller: _addressController,
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: AppColors.backgroundGrey.withOpacity(
-                                  0.45,
-                                ),
-                                labelText: 'Address',
-                                labelStyle: GoogleFonts.alice(
-                                  fontSize: 18,
-                                  color: AppColors.textLightGrey,
-                                ),
-                                prefixIcon: Padding(
-                                  padding: const EdgeInsets.all(12.0),
-                                  child: Image.asset(
-                                    'assets/icons/address.png',
-                                    width: 24,
-                                    height: 24,
-                                  ),
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 18,
-                                ),
-                              ),
+                              labelText: 'Address',
+                              iconPath: 'assets/icons/address.png',
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your address';
+                                }
+                                return null;
+                              },
                             ),
-                            const SizedBox(height: 50),
+                            const SizedBox(height: 40),
                             state.isLoading
-                                ? const CircularProgressIndicator()
+                                ? const CircularProgressIndicator(
+                                    color: AppColors.primaryOrange,
+                                  )
                                 : ElevatedButton(
                                     onPressed: () async {
                                       if (_formKey.currentState!.validate()) {
@@ -335,7 +287,8 @@ class _BusinessSignupScreenState extends ConsumerState<BusinessSignupScreen> {
                                               .trim(),
                                           address: _addressController.text
                                               .trim(),
-                                          role: 'User',
+                                          role: 'BUSINESS',
+                                          profileImagePath: _profileImage?.path,
                                         );
 
                                         await ref
@@ -348,31 +301,30 @@ class _BusinessSignupScreenState extends ConsumerState<BusinessSignupScreen> {
                                     },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: AppColors.primaryOrange,
-                                      minimumSize: const Size(230, 40),
+                                      minimumSize: const Size(230, 50),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
                                       ),
+                                      elevation: 3,
                                     ),
                                     child: Text(
                                       "Signup",
-                                      style: GoogleFonts.alice(
-                                        fontSize: 25,
-                                        color: AppColors.primaryWhite,
+                                      style: AppStyles.button.copyWith(
+                                        fontSize: 22,
                                       ),
                                     ),
                                   ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 16),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
                                   "Already have an account?",
-                                  style: GoogleFonts.alice(
-                                    fontSize: 16,
+                                  style: AppStyles.body.copyWith(
                                     color: AppColors.textDarkGrey,
                                   ),
                                 ),
-                                const SizedBox(width: 2),
+                                const SizedBox(width: 4),
                                 GestureDetector(
                                   onTap: () => Navigator.push(
                                     context,
@@ -382,9 +334,7 @@ class _BusinessSignupScreenState extends ConsumerState<BusinessSignupScreen> {
                                   ),
                                   child: Text(
                                     "Login!",
-                                    style: GoogleFonts.alice(
-                                      fontSize: 16,
-                                      color: AppColors.errorRed,
+                                    style: AppStyles.linkText.copyWith(
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -404,5 +354,65 @@ class _BusinessSignupScreenState extends ConsumerState<BusinessSignupScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String labelText,
+    required String iconPath,
+    bool obscureText = false,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      obscureText: obscureText,
+      style: AppStyles.body,
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: AppColors.backgroundGrey.withOpacity(0.45),
+        labelText: labelText,
+        labelStyle: AppStyles.subtitle,
+        prefixIcon: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Image.asset(iconPath, width: 24, height: 24),
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.primaryOrange, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.errorRed, width: 1.5),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.errorRed, width: 2),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 18,
+        ),
+      ),
+      validator: validator,
+    );
+  }
+
+  @override
+  void dispose() {
+    _businessNameController.dispose();
+    _usernameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _phoneNumberController.dispose();
+    _addressController.dispose();
+    super.dispose();
   }
 }

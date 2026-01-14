@@ -8,8 +8,9 @@ import 'package:pet_connect/features/business/business_auth/domain/repository/bu
 /// Register Business UseCase
 final registerBusinessUseCaseProvider =
     Provider.autoDispose<RegisterBusinessUseCase>(
-  (ref) => RegisterBusinessUseCase(ref.read(businessRemoteRepositoryProvider)),
-);
+      (ref) =>
+          RegisterBusinessUseCase(ref.read(businessRemoteRepositoryProvider)),
+    );
 
 class RegisterBusinessUseCase {
   final BusinessRepository repository;
@@ -21,8 +22,7 @@ class RegisterBusinessUseCase {
 }
 
 /// Login Business UseCase
-final loginBusinessUseCaseProvider =
-    Provider.autoDispose<LoginBusinessUseCase>(
+final loginBusinessUseCaseProvider = Provider.autoDispose<LoginBusinessUseCase>(
   (ref) => LoginBusinessUseCase(ref.read(businessRemoteRepositoryProvider)),
 );
 
@@ -30,17 +30,20 @@ class LoginBusinessUseCase {
   final BusinessRepository repository;
   LoginBusinessUseCase(this.repository);
 
-  Future<Either<Failure, bool>> execute(String username, String password) async {
+  Future<Either<Failure, bool>> execute(
+    String username,
+    String password,
+  ) async {
     return repository.loginBusiness(username, password);
   }
 }
 
-
 /// Upload Documents UseCase
 final uploadDocumentsUseCaseProvider =
     Provider.autoDispose<UploadDocumentsUseCase>(
-  (ref) => UploadDocumentsUseCase(ref.read(businessRemoteRepositoryProvider)),
-);
+      (ref) =>
+          UploadDocumentsUseCase(ref.read(businessRemoteRepositoryProvider)),
+    );
 
 class UploadDocumentsUseCase {
   final BusinessRepository repository;
@@ -51,17 +54,17 @@ class UploadDocumentsUseCase {
   }
 }
 
-/// Get Nearby Businesses UseCase
-final nearbyBusinessesUseCaseProvider =
-    Provider.autoDispose<NearbyBusinessesUseCase>(
-  (ref) => NearbyBusinessesUseCase(ref.read(businessRemoteRepositoryProvider)),
-);
+final uploadProfileImageUseCaseProvider =
+    Provider.autoDispose<UploadProfileImageUseCase>(
+      (ref) =>
+          UploadProfileImageUseCase(ref.read(businessRemoteRepositoryProvider)),
+    );
 
-class NearbyBusinessesUseCase {
+class UploadProfileImageUseCase {
   final BusinessRepository repository;
-  NearbyBusinessesUseCase(this.repository);
+  UploadProfileImageUseCase(this.repository);
 
-  Future<Either<Failure, List<dynamic>>> execute(double latitude, double longitude) async {
-    return repository.getNearby(latitude, longitude);
+  Future<Either<Failure, bool>> execute(String imagePath) {
+    return repository.uploadProfileImage(imagePath);
   }
 }

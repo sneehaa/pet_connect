@@ -13,4 +13,6 @@ class AppColors {
   static const Color primaryWhite = Colors.white;
   static const Color textGrey = Color(0xFF555555);
   static const Color background = Color.fromARGB(255, 255, 248, 240);
+
+  static const Color successGreen = Color.fromARGB(255, 4, 185, 52);
 }

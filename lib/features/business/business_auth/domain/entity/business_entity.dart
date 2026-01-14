@@ -10,6 +10,7 @@ class BusinessEntity extends Equatable {
   final String? address;
   final String? adoptionPolicy;
   final String role;
+  final String? profileImagePath; 
 
   const BusinessEntity({
     this.businessId,
@@ -21,18 +22,20 @@ class BusinessEntity extends Equatable {
     this.address,
     this.adoptionPolicy,
     required this.role,
+    this.profileImagePath,
   });
 
   @override
   List<Object?> get props => [
-        businessId,
-        businessName,
-        username,
-        email,
-        phoneNumber,
-        password,
-        address,
-        adoptionPolicy,
-        role,
-      ];
+    businessId,
+    businessName,
+    username,
+    email,
+    phoneNumber,
+    password,
+    address,
+    adoptionPolicy,
+    role,
+    profileImagePath,
+  ];
 }

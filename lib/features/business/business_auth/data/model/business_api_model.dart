@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+
 import '../../domain/entity/business_entity.dart';
 
 part 'business_api_model.g.dart';

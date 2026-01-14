@@ -29,17 +29,49 @@ class BusinessRemoteDataSource {
   ) async {
     try {
       final apiModel = BusinessApiModel.fromEntity(business);
+
+      // Create FormData for multipart request
+      final formData = FormData();
+
+      // Add text fields
+      formData.fields.addAll([
+        MapEntry('businessName', apiModel.businessName),
+        MapEntry('username', apiModel.username),
+        MapEntry('email', apiModel.email),
+        MapEntry('password', apiModel.password),
+        MapEntry('phoneNumber', apiModel.phoneNumber),
+      ]);
+
+      // Add optional fields if they exist
+      if (apiModel.address != null && apiModel.address!.isNotEmpty) {
+        formData.fields.add(MapEntry('address', apiModel.address!));
+      }
+
+      if (apiModel.adoptionPolicy != null &&
+          apiModel.adoptionPolicy!.isNotEmpty) {
+        formData.fields.add(
+          MapEntry('adoptionPolicy', apiModel.adoptionPolicy!),
+        );
+      }
+
+      // Add profile image if provided
+      if (business.profileImagePath != null &&
+          business.profileImagePath!.isNotEmpty) {
+        formData.files.add(
+          MapEntry(
+            'profileImage',
+            await MultipartFile.fromFile(
+              business.profileImagePath!,
+              filename: 'profile_${DateTime.now().millisecondsSinceEpoch}.jpg',
+            ),
+          ),
+        );
+      }
+
       final response = await dio.post(
         ApiEndpoints.businessRegister,
-        data: {
-          "businessName": apiModel.businessName,
-          "username": apiModel.username,
-          "email": apiModel.email,
-          "password": apiModel.password,
-          "phoneNumber": apiModel.phoneNumber,
-          "address": apiModel.address,
-          "adoptionPolicy": apiModel.adoptionPolicy,
-        },
+        data: formData,
+        options: Options(contentType: null),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -57,9 +89,16 @@ class BusinessRemoteDataSource {
         );
       }
     } on DioException catch (e) {
+      print('Registration error: ${e.message}');
+      print('Error type: ${e.type}');
+      print('Response data: ${e.response?.data}');
+
       return Left(
         Failure(
-          error: e.error.toString(),
+          error:
+              e.response?.data?["message"] ??
+              e.message ??
+              "Registration failed",
           statusCode: e.response?.statusCode.toString() ?? '0',
         ),
       );
@@ -156,6 +195,49 @@ class BusinessRemoteDataSource {
       return Left(Failure(error: 'Network error. Please try again.'));
     } catch (_) {
       return Left(Failure(error: 'Something went wrong. Please try again.'));
+    }
+  }
+
+  Future<Either<Failure, bool>> uploadProfileImage(String imagePath) async {
+    try {
+      final token = await secureStorage.read(key: "businessAuthToken");
+      if (token == null) {
+        return Left(Failure(error: "Authentication token not found"));
+      }
+
+      final formData = FormData.fromMap({
+        "profileImage": await MultipartFile.fromFile(
+          imagePath,
+          filename: imagePath.split('/').last,
+        ),
+      });
+
+      final response = await dio.put(
+        ApiEndpoints.businessProfileImage,
+        data: formData,
+        options: Options(
+          headers: {"Authorization": "Bearer $token"},
+          contentType: null,
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        return const Right(true);
+      } else {
+        return Left(
+          Failure(
+            error: response.data['message'] ?? 'Failed to upload profile image',
+            statusCode: response.statusCode.toString(),
+          ),
+        );
+      }
+    } on DioException catch (e) {
+      return Left(
+        Failure(
+          error: e.response?.data?['message'] ?? 'Profile image upload failed',
+          statusCode: e.response?.statusCode.toString(),
+        ),
+      );
     }
   }
 

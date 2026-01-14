@@ -9,8 +9,5 @@ abstract class BusinessRepository {
 
   Future<Either<Failure, bool>> uploadDocuments(List<String> filePaths);
 
-  Future<Either<Failure, List<dynamic>>> getNearby(
-    double latitude,
-    double longitude,
-  );
+  Future<Either<Failure, bool>> uploadProfileImage(String imagePath);
 }

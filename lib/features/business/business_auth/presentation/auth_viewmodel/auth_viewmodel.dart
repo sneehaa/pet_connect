@@ -10,7 +10,7 @@ final businessViewModelProvider =
         ref.read(registerBusinessUseCaseProvider),
         ref.read(loginBusinessUseCaseProvider),
         ref.read(uploadDocumentsUseCaseProvider),
-        ref.read(nearbyBusinessesUseCaseProvider),
+        ref.read(uploadProfileImageUseCaseProvider),
       ),
     );
 
@@ -18,13 +18,13 @@ class BusinessViewModel extends StateNotifier<BusinessState> {
   final RegisterBusinessUseCase _registerUseCase;
   final LoginBusinessUseCase _loginUseCase;
   final UploadDocumentsUseCase _uploadDocsUseCase;
-  final NearbyBusinessesUseCase _nearbyUseCase;
+  final UploadProfileImageUseCase _uploadProfileImageUseCase;
 
   BusinessViewModel(
     this._registerUseCase,
     this._loginUseCase,
     this._uploadDocsUseCase,
-    this._nearbyUseCase,
+    this._uploadProfileImageUseCase,
   ) : super(BusinessState.initial());
 
   /// Register
@@ -53,7 +53,25 @@ class BusinessViewModel extends StateNotifier<BusinessState> {
     );
   }
 
-  /// Login
+  Future<void> uploadProfileImage(String imagePath) async {
+    state = state.copyWith(isLoading: true, clearMessage: true);
+
+    final result = await _uploadProfileImageUseCase.execute(imagePath);
+
+    result.fold(
+      (failure) => state = state.copyWith(
+        isLoading: false,
+        isError: true,
+        message: failure.error,
+      ),
+      (_) => state = state.copyWith(
+        isLoading: false,
+        isError: false,
+        message: "Profile image uploaded successfully",
+      ),
+    );
+  }
+
   /// Login
   Future<void> loginBusiness(String username, String password) async {
     state = state.copyWith(isLoading: true, isError: false, clearMessage: true);
@@ -106,24 +124,6 @@ class BusinessViewModel extends StateNotifier<BusinessState> {
         message:
             'Documents uploaded successfully. Please wait for Admin approval',
         flow: BusinessFlow.documentsUploaded,
-      ),
-    );
-  }
-
-  /// Get nearby businesses
-  Future<void> getNearbyBusinesses(double lat, double lng) async {
-    state = state.copyWith(isLoading: true, message: null);
-    final result = await _nearbyUseCase.execute(lat, lng);
-    result.fold(
-      (failure) => state = state.copyWith(
-        isLoading: false,
-        isError: true,
-        message: failure.error,
-      ),
-      (businesses) => state = state.copyWith(
-        isLoading: false,
-        isError: false,
-        nearbyBusinesses: businesses,
       ),
     );
   }
