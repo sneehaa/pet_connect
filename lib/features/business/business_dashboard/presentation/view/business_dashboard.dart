@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pet_connect/config/themes/app_colors.dart';
 import 'package:pet_connect/config/themes/app_styles.dart';
 import 'package:pet_connect/features/business/business_dashboard/presentation/view/%20pets_list.dart';
 import 'package:pet_connect/features/business/business_dashboard/presentation/view/adoption_requests_list.dart';
+import 'package:pet_connect/features/business/business_dashboard/presentation/viewmodel/dashboard_view_model.dart';
 import 'package:pet_connect/features/business/business_profile/presentation/view/business_profile.dart';
+import 'package:pet_connect/utils/login_choice.dart';
 
-class BusinessDashboardScreen extends StatefulWidget {
+class BusinessDashboardScreen extends ConsumerStatefulWidget {
   const BusinessDashboardScreen({super.key});
 
   @override
-  State<BusinessDashboardScreen> createState() =>
+  ConsumerState<BusinessDashboardScreen> createState() =>
       _BusinessDashboardScreenState();
 }
 
-class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
+class _BusinessDashboardScreenState
+    extends ConsumerState<BusinessDashboardScreen> {
   int _selectedIndex = 0;
 
   final List<Map<String, dynamic>> _screenData = [
@@ -89,6 +93,7 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              // Greeting Section
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -111,45 +116,101 @@ class _BusinessDashboardScreenState extends State<BusinessDashboardScreen> {
                   ),
                 ],
               ),
-              Container(
-                width: 45,
-                height: 45,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryWhite,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey.shade300, width: 1),
-                ),
-                child: Stack(
-                  children: [
-                    Center(
-                      child: Image.asset(
-                        'assets/icons/bell.png',
-                        height: 26,
-                        color: _textDeepDark,
-                      ),
+
+              // Notification + Logout
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: () async {
+                      final shouldLogout = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Logout'),
+                          content: const Text(
+                            'Are you sure you want to logout?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text(
+                                'Logout',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (shouldLogout ?? false) {
+                        await ref
+                            .read(dashboardViewModelProvider.notifier)
+                            .logout();
+
+                        final state = ref.read(dashboardViewModelProvider);
+                        if (state.logoutSuccess) {
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(
+                              builder: (_) => const LoginChoiceScreen(),
+                            ),
+                          );
+                        } else if (state.message != null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(state.message!)),
+                          );
+                        }
+                      }
+                    },
+                    icon: const Icon(Icons.logout, color: Colors.red),
+                    tooltip: 'Logout',
+                  ),
+
+                  // Notification Bell
+                  Container(
+                    width: 45,
+                    height: 45,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryWhite,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade300, width: 1),
                     ),
-                    Positioned(
-                      right: 8,
-                      top: 8,
-                      child: Container(
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          color: AppColors.errorRed,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: AppColors.primaryWhite,
-                            width: 1.5,
+                    child: Stack(
+                      children: [
+                        Center(
+                          child: Image.asset(
+                            'assets/icons/bell.png',
+                            height: 26,
+                            color: _textDeepDark,
                           ),
                         ),
-                      ),
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: AppColors.errorRed,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppColors.primaryWhite,
+                                width: 1.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ],
           ),
           const SizedBox(height: 30),
+          // Page Title & Icon
           Row(
             children: [
               Container(

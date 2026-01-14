@@ -159,4 +159,8 @@ class PetViewModel extends StateNotifier<PetState> {
   void reset() {
     state = const PetState();
   }
+
+  void clearMessage() {
+    state = state.copyWith(message: null);
+  }
 }

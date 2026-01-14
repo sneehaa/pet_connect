@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pet_connect/config/themes/app_colors.dart';
 import 'package:pet_connect/config/themes/app_styles.dart';
+import 'package:pet_connect/features/user/businesses/domain/entity/business_entity.dart';
 import 'package:pet_connect/features/user/pets/domain/entity/pet_entity.dart';
 import 'package:pet_connect/features/user/pets/presentation/state/pet_state.dart';
 import 'package:pet_connect/features/user/pets/presentation/view/pet_screen.dart';
 import 'package:pet_connect/features/user/pets/presentation/viewmodel/pet_viewmodel.dart';
 
 class BusinessPetsSection extends ConsumerStatefulWidget {
-  final String businessId;
+  final BusinessEntity businessEntity;
 
-  const BusinessPetsSection({super.key, required this.businessId});
+  const BusinessPetsSection({super.key, required this.businessEntity});
 
   @override
   ConsumerState<BusinessPetsSection> createState() =>
@@ -418,12 +419,17 @@ class _BusinessPetsSectionState extends ConsumerState<BusinessPetsSection>
           ),
           const SizedBox(height: 24),
           Text(
+            widget.businessEntity.businessName,
+            style: AppStyles.headline3.copyWith(fontSize: 18),
+          ),
+          const SizedBox(height: 8),
+          Text(
             'No Pets Available',
             style: AppStyles.headline3.copyWith(fontSize: 20),
           ),
           const SizedBox(height: 12),
           Text(
-            'This business hasn\'t listed any pets yet.\nCheck back soon for new companions!',
+            '${widget.businessEntity.businessName} hasn\'t listed any pets yet.\nCheck back soon for new companions!',
             style: AppStyles.body.copyWith(
               color: AppColors.textLightGrey,
               height: 1.5,
@@ -433,7 +439,6 @@ class _BusinessPetsSectionState extends ConsumerState<BusinessPetsSection>
           const SizedBox(height: 24),
           OutlinedButton.icon(
             onPressed: () {
-              // Refresh or go back
               ref.read(petViewModelProvider.notifier).loadAllPets();
             },
             icon: const Icon(Icons.refresh_rounded, size: 18),

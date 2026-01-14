@@ -68,7 +68,7 @@ class _AddEditPetScreenState extends ConsumerState<AddEditPetScreen> {
   @override
   Widget build(BuildContext context) {
     ref.listen<PetState>(petViewModelProvider, (previous, next) {
-      if (next.message != null) {
+      if (next.message != null && next.message != previous?.message) {
         showSnackBar(
           context: context,
           message: next.message!,
@@ -82,6 +82,9 @@ class _AddEditPetScreenState extends ConsumerState<AddEditPetScreen> {
             Navigator.pop(context);
           });
         }
+
+        // Clear the message after showing
+        ref.read(petViewModelProvider.notifier).clearMessage();
       }
     });
 

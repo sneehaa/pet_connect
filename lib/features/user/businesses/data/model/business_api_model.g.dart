@@ -18,6 +18,7 @@ BusinessApiModel _$BusinessApiModelFromJson(Map<String, dynamic> json) =>
       location: json['location'] as Map<String, dynamic>?,
       role: json['role'] as String,
       distance: (json['distance'] as num?)?.toDouble(),
+      profileImageUrl: json['profileImage'] as String?,
     );
 
 Map<String, dynamic> _$BusinessApiModelToJson(BusinessApiModel instance) =>
@@ -32,4 +33,5 @@ Map<String, dynamic> _$BusinessApiModelToJson(BusinessApiModel instance) =>
       'location': instance.location,
       'role': instance.role,
       'distance': instance.distance,
+      'profileImage': instance.profileImageUrl,
     };

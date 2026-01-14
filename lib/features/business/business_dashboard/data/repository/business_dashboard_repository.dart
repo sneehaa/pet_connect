@@ -1,6 +1,8 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pet_connect/core/failure/failure.dart';
+import 'package:pet_connect/core/provider/flutter_secure_storage.dart';
 import 'package:pet_connect/features/business/business_dashboard/data/data_source/adoption_remote_data_source.dart';
 import 'package:pet_connect/features/business/business_dashboard/data/data_source/pets_remote_data_source.dart';
 import 'package:pet_connect/features/business/business_dashboard/domain/entity/adoption_entity.dart';
@@ -12,16 +14,19 @@ final businessDashboardRepositoryProvider =
       (ref) => BusinessDashboardRemoteRepository(
         ref.read(petsRemoteDataSourceProvider),
         ref.read(adoptionRemoteDataSourceProvider),
+        ref.read(flutterSecureStorageProvider),
       ),
     );
 
 class BusinessDashboardRemoteRepository implements BusinessDashboardRepository {
   final PetsRemoteDataSource _remoteDataSource;
   final AdoptionRemoteDataSource _adoptionremoteDataSource;
+  final FlutterSecureStorage _storage;
 
   BusinessDashboardRemoteRepository(
     this._remoteDataSource,
     this._adoptionremoteDataSource,
+    this._storage,
   );
 
   @override
@@ -34,7 +39,7 @@ class BusinessDashboardRemoteRepository implements BusinessDashboardRepository {
   @override
   Future<Either<Failure, PetEntity>> addPet(
     PetEntity pet,
-    List<String>? photoPaths, 
+    List<String>? photoPaths,
   ) {
     return _remoteDataSource.addPet(pet, photoPaths);
   }
@@ -88,5 +93,10 @@ class BusinessDashboardRemoteRepository implements BusinessDashboardRepository {
     String status,
   ) {
     return _adoptionremoteDataSource.updateAdoptionStatus(adoptionId, status);
+  }
+
+  @override
+  Future<void> logout() async {
+    await _storage.deleteAll();
   }
 }

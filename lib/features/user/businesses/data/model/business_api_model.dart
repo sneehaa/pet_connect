@@ -16,6 +16,8 @@ class BusinessApiModel {
   final Map<String, dynamic>? location;
   final String role;
   final double? distance;
+  @JsonKey(name: 'profileImage')
+  final String? profileImageUrl;
 
   BusinessApiModel({
     this.id,
@@ -28,6 +30,7 @@ class BusinessApiModel {
     this.location,
     required this.role,
     this.distance,
+    this.profileImageUrl,
   });
 
   /// From Entity
@@ -41,6 +44,7 @@ class BusinessApiModel {
       adoptionPolicy: businessEntity.adoptionPolicy,
       address: businessEntity.address,
       role: businessEntity.role,
+      profileImageUrl: businessEntity.profileImageUrl,
     );
   }
 
@@ -55,6 +59,7 @@ class BusinessApiModel {
       adoptionPolicy: adoptionPolicy,
       address: address,
       role: role,
+      profileImageUrl: profileImageUrl,
     );
   }
 

@@ -9,6 +9,7 @@ class BusinessEntity extends Equatable {
   final String? adoptionPolicy;
   final String? address;
   final String role;
+  final String? profileImageUrl;
 
   const BusinessEntity({
     this.id,
@@ -19,6 +20,7 @@ class BusinessEntity extends Equatable {
     this.adoptionPolicy,
     this.address,
     required this.role,
+    this.profileImageUrl
   });
 
   @override
@@ -31,5 +33,6 @@ class BusinessEntity extends Equatable {
     adoptionPolicy,
     address,
     role,
+    profileImageUrl
   ];
 }

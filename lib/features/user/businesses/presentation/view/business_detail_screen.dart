@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pet_connect/config/themes/app_colors.dart';
 import 'package:pet_connect/config/themes/app_styles.dart';
 import 'package:pet_connect/features/user/businesses/domain/entity/business_entity.dart';
+import 'package:pet_connect/features/user/businesses/presentation/state/business_state.dart';
 import 'package:pet_connect/features/user/businesses/presentation/view/widget/business_contact_section.dart';
 import 'package:pet_connect/features/user/businesses/presentation/view/widget/business_info_section.dart';
 import 'package:pet_connect/features/user/businesses/presentation/view/widget/business_pets_section.dart';
@@ -23,6 +24,8 @@ class _BusinessDetailScreenState extends ConsumerState<BusinessDetailScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  final ScrollController _scrollController = ScrollController();
+  bool _isScrolled = false;
 
   @override
   void initState() {
@@ -37,6 +40,14 @@ class _BusinessDetailScreenState extends ConsumerState<BusinessDetailScreen>
     );
     _animationController.forward();
 
+    _scrollController.addListener(() {
+      if (_scrollController.offset > 100 && !_isScrolled) {
+        setState(() => _isScrolled = true);
+      } else if (_scrollController.offset <= 100 && _isScrolled) {
+        setState(() => _isScrolled = false);
+      }
+    });
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref
           .read(businessViewModelProvider.notifier)
@@ -50,6 +61,7 @@ class _BusinessDetailScreenState extends ConsumerState<BusinessDetailScreen>
   @override
   void dispose() {
     _animationController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -60,9 +72,9 @@ class _BusinessDetailScreenState extends ConsumerState<BusinessDetailScreen>
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.85,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        decoration: BoxDecoration(
+          color: AppColors.primaryWhite,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         ),
         child: Column(
           children: [
@@ -81,16 +93,19 @@ class _BusinessDetailScreenState extends ConsumerState<BusinessDetailScreen>
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Row(
                 children: [
+                  // Business Profile Image in Info Sheet
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    width: 60,
+                    height: 60,
                     decoration: BoxDecoration(
-                      color: AppColors.primaryOrange.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.primaryOrange.withOpacity(0.3),
+                        width: 2,
+                      ),
                     ),
-                    child: Icon(
-                      Icons.store_rounded,
-                      color: AppColors.primaryOrange,
-                      size: 28,
+                    child: ClipOval(
+                      child: _buildBusinessProfileImage(business),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -100,7 +115,7 @@ class _BusinessDetailScreenState extends ConsumerState<BusinessDetailScreen>
                       children: [
                         Text(
                           business.businessName,
-                          style: AppStyles.headline3.copyWith(fontSize: 22),
+                          style: AppStyles.headline3.copyWith(fontSize: 20),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -126,7 +141,7 @@ class _BusinessDetailScreenState extends ConsumerState<BusinessDetailScreen>
                 ],
               ),
             ),
-            const Divider(height: 1),
+            Divider(height: 1, color: AppColors.backgroundGrey),
             // Content
             Expanded(
               child: SingleChildScrollView(
@@ -151,6 +166,45 @@ class _BusinessDetailScreenState extends ConsumerState<BusinessDetailScreen>
     );
   }
 
+  Widget _buildBusinessProfileImage(BusinessEntity business) {
+    final imageUrl = business.profileImageUrl;
+
+    if (imageUrl == null || imageUrl.isEmpty) {
+      return Container(
+        color: AppColors.primaryWhite,
+        child: Center(
+          child: Icon(Icons.business, size: 30, color: AppColors.primaryOrange),
+        ),
+      );
+    }
+
+    return Image.network(
+      imageUrl,
+      fit: BoxFit.cover,
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return Center(
+          child: CircularProgressIndicator(
+            color: AppColors.primaryOrange,
+            strokeWidth: 2,
+          ),
+        );
+      },
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          color: AppColors.primaryWhite,
+          child: Center(
+            child: Icon(
+              Icons.business,
+              size: 30,
+              color: AppColors.primaryOrange,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final businessState = ref.watch(businessViewModelProvider);
@@ -159,19 +213,25 @@ class _BusinessDetailScreenState extends ConsumerState<BusinessDetailScreen>
     return Scaffold(
       backgroundColor: AppColors.background,
       body: businessState.isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(
+              child: CircularProgressIndicator(color: AppColors.primaryOrange),
+            )
           : CustomScrollView(
+              controller: _scrollController,
               slivers: [
-                // Modern App Bar with Hero Image
+                // Enhanced App Bar
                 SliverAppBar(
                   expandedHeight: 280,
                   pinned: true,
                   stretch: true,
-                  backgroundColor: AppColors.primaryOrange,
+                  backgroundColor: AppColors.primaryWhite,
+                  elevation: _isScrolled ? 2 : 0,
                   leading: Container(
                     margin: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
+                      color: _isScrolled
+                          ? AppColors.primaryWhite
+                          : Colors.black.withOpacity(0.4),
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
@@ -182,7 +242,13 @@ class _BusinessDetailScreenState extends ConsumerState<BusinessDetailScreen>
                       ],
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                      icon: Icon(
+                        Icons.arrow_back_ios_new,
+                        color: _isScrolled
+                            ? AppColors.textBlack
+                            : AppColors.primaryWhite,
+                        size: 20,
+                      ),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ),
@@ -191,7 +257,9 @@ class _BusinessDetailScreenState extends ConsumerState<BusinessDetailScreen>
                       Container(
                         margin: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.9),
+                          color: _isScrolled
+                              ? AppColors.primaryWhite
+                              : Colors.black.withOpacity(0.4),
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
@@ -202,159 +270,288 @@ class _BusinessDetailScreenState extends ConsumerState<BusinessDetailScreen>
                           ],
                         ),
                         child: IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.info_outline,
-                            color: Colors.black87,
+                            color: _isScrolled
+                                ? AppColors.textBlack
+                                : AppColors.primaryWhite,
                           ),
                           onPressed: () => _showBusinessInfo(context, business),
                         ),
                       ),
                   ],
                   flexibleSpace: FlexibleSpaceBar(
-                    title: business != null
+                    centerTitle: true,
+                    titlePadding: EdgeInsets.zero,
+                    title: _isScrolled && business != null
                         ? Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.6),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                            padding: const EdgeInsets.only(bottom: 16),
                             child: Text(
                               business.businessName,
-                              style: const TextStyle(
+                              style: AppStyles.headline3.copyWith(
                                 fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: AppColors.textBlack,
                               ),
                             ),
                           )
                         : null,
-                    centerTitle: true,
-                    titlePadding: const EdgeInsets.only(bottom: 16),
                     background: Stack(
                       fit: StackFit.expand,
                       children: [
-                        // Gradient Background
+                        // Business Cover Image
+                        if (business != null &&
+                            business.profileImageUrl != null &&
+                            business.profileImageUrl!.isNotEmpty)
+                          Image.network(
+                            business.profileImageUrl!,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Center(
+                                child: CircularProgressIndicator(
+                                  color: AppColors.primaryOrange,
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              return _buildFallbackBackground();
+                            },
+                          )
+                        else
+                          _buildFallbackBackground(),
+
+                        // Gradient Overlay
                         Container(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
                               colors: [
-                                AppColors.primaryOrange,
-                                AppColors.primaryOrange.withOpacity(0.7),
+                                Colors.black.withOpacity(0.3),
+                                Colors.black.withOpacity(0.7),
+                              ],
+                              stops: const [0.3, 1.0],
+                            ),
+                          ),
+                        ),
+
+                        // Business Info at Bottom
+                        if (business != null)
+                          Positioned(
+                            left: 24,
+                            right: 24,
+                            bottom: 20,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Business Name
+                                Text(
+                                  business.businessName,
+                                  style: AppStyles.headline2.copyWith(
+                                    color: AppColors.primaryWhite,
+                                    fontWeight: FontWeight.bold,
+                                    shadows: [
+                                      Shadow(
+                                        blurRadius: 12,
+                                        color: Colors.black.withOpacity(0.6),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                // Username Badge
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryWhite.withOpacity(
+                                      0.2,
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: AppColors.primaryWhite.withOpacity(
+                                        0.3,
+                                      ),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.alternate_email,
+                                        size: 14,
+                                        color: AppColors.primaryWhite,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        business.username,
+                                        style: AppStyles.body.copyWith(
+                                          color: AppColors.primaryWhite,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ],
                             ),
                           ),
-                        ),
-                        // Decorative Pattern
-                        Positioned(
-                          right: -50,
-                          top: -50,
-                          child: Container(
-                            width: 200,
-                            height: 200,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white.withOpacity(0.1),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          left: -30,
-                          bottom: -30,
-                          child: Container(
-                            width: 150,
-                            height: 150,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white.withOpacity(0.1),
-                            ),
-                          ),
-                        ),
-                        // Icon
-                        Center(
-                          child: Icon(
-                            Icons.storefront_rounded,
-                            size: 100,
-                            color: Colors.white.withOpacity(0.3),
-                          ),
-                        ),
                       ],
                     ),
                   ),
                 ),
-                // Section Header
+
+                // Available Pets Header Section
                 SliverToBoxAdapter(
                   child: FadeTransition(
                     opacity: _fadeAnimation,
                     child: Container(
-                      margin: const EdgeInsets.fromLTRB(16, 24, 16, 16),
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppColors.primaryOrange.withOpacity(0.1),
-                            AppColors.primaryOrange.withOpacity(0.05),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: AppColors.primaryOrange.withOpacity(0.2),
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
+                      margin: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: AppColors.primaryOrange,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(
-                              Icons.pets,
-                              color: Colors.white,
-                              size: 24,
+                          Text(
+                            'Available Pets',
+                            style: AppStyles.headline2.copyWith(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Available Pets',
-                                  style: AppStyles.headline3.copyWith(
-                                    fontSize: 18,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Find your perfect companion',
-                                  style: AppStyles.small.copyWith(
-                                    color: AppColors.textLightGrey,
-                                  ),
-                                ),
-                              ],
+                          const SizedBox(height: 6),
+                          Text(
+                            'Discover adorable companions waiting for a loving home',
+                            style: AppStyles.body.copyWith(
+                              color: AppColors.textGrey,
                             ),
                           ),
+                          const SizedBox(height: 20),
                         ],
                       ),
                     ),
                   ),
                 ),
+
                 // Pets Grid
                 SliverToBoxAdapter(
                   child: FadeTransition(
                     opacity: _fadeAnimation,
-                    child: BusinessPetsSection(businessId: widget.businessId),
+                    child: business != null
+                        ? BusinessPetsSection(businessEntity: business)
+                        : _buildLoadingOrErrorState(businessState),
                   ),
                 ),
               ],
             ),
+    );
+  }
+
+  Widget _buildFallbackBackground() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primaryOrange,
+            AppColors.primaryOrange.withOpacity(0.6),
+          ],
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          Icons.storefront_rounded,
+          size: 120,
+          color: AppColors.primaryWhite.withOpacity(0.3),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingOrErrorState(BusinessState state) {
+    if (state.isError) {
+      return Container(
+        height: 300,
+        margin: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: AppColors.primaryWhite,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.errorRed.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.error_outline,
+                  size: 50,
+                  color: AppColors.errorRed,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Oops! Something went wrong',
+                style: AppStyles.headline3.copyWith(fontSize: 18),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                state.message ?? 'Failed to load business details',
+                style: AppStyles.body.copyWith(color: AppColors.textGrey),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: () {
+                  ref
+                      .read(businessViewModelProvider.notifier)
+                      .getBusinessById(widget.businessId);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryOrange,
+                  foregroundColor: AppColors.primaryWhite,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 14,
+                  ),
+                  elevation: 2,
+                ),
+                icon: const Icon(Icons.refresh, size: 20),
+                label: Text(
+                  'Try Again',
+                  style: AppStyles.button.copyWith(fontSize: 16),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Default loading state
+    return SizedBox(
+      height: 300,
+      child: Center(
+        child: CircularProgressIndicator(color: AppColors.primaryOrange),
+      ),
     );
   }
 }
