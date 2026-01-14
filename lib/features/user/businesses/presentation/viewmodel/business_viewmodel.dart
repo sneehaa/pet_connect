@@ -37,31 +37,6 @@ class BusinessViewModel extends StateNotifier<BusinessState> {
     );
   }
 
-  Future<void> getNearbyBusinesses({
-    required double latitude,
-    required double longitude,
-  }) async {
-    state = state.copyWith(isLoadingNearby: true, message: null);
-
-    final result = await _businessUseCases.getNearbyBusinesses(
-      latitude: latitude,
-      longitude: longitude,
-    );
-
-    state = state.copyWith(isLoadingNearby: false);
-
-    result.fold(
-      (failure) {
-        state = state.copyWith(message: failure.error, isError: true);
-      },
-      (nearbyBusinesses) {
-        state = state.copyWith(
-          nearbyBusinesses: nearbyBusinesses,
-          isError: false,
-        );
-      },
-    );
-  }
 
   Future<void> getBusinessById(String businessId) async {
     state = state.copyWith(isLoading: true, message: null);

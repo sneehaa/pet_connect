@@ -19,17 +19,6 @@ class BusinessUseCases {
     return await businessRepository.getAllBusinesses();
   }
 
-  // Get nearby businesses
-  Future<Either<Failure, List<BusinessEntity>>> getNearbyBusinesses({
-    required double latitude,
-    required double longitude,
-  }) async {
-    return await businessRepository.getNearbyBusinesses(
-      latitude: latitude,
-      longitude: longitude,
-    );
-  }
-
   // Get business by ID
   Future<Either<Failure, BusinessEntity>> getBusinessById(
     String businessId,

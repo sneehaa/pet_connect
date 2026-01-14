@@ -5,7 +5,6 @@ import 'package:pet_connect/features/user/businesses/data/datasource/business_re
 import 'package:pet_connect/features/user/businesses/domain/entity/business_entity.dart';
 import 'package:pet_connect/features/user/businesses/domain/repository/business_repository.dart';
 
-
 final businessRemoteRepositoryProvider = Provider<BusinessRepository>(
   (ref) => BusinessRemoteRepository(ref.read(businessRemoteDataSourceProvider)),
 );
@@ -21,21 +20,9 @@ class BusinessRemoteRepository implements BusinessRepository {
   }
 
   @override
-  Future<Either<Failure, List<BusinessEntity>>> getNearbyBusinesses({
-    required double latitude,
-    required double longitude,
-  }) async {
-    return await _businessRemoteDataSource.getNearbyBusinesses(
-      latitude: latitude,
-      longitude: longitude,
-    );
-  }
-
-  @override
   Future<Either<Failure, BusinessEntity>> getBusinessById(
     String businessId,
   ) async {
     return await _businessRemoteDataSource.getBusinessById(businessId);
   }
-
 }

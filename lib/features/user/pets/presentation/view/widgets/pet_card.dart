@@ -27,6 +27,7 @@ class UserPetCard extends StatelessWidget {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min, // Add this
           children: [
             // Pet Image
             ClipRRect(
@@ -65,11 +66,13 @@ class UserPetCard extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min, // Add this
                 children: [
                   Text(
                     pet.name,
                     style: AppStyles.headline3.copyWith(fontSize: 16),
                     overflow: TextOverflow.ellipsis,
+                    maxLines: 1, // Add this
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -78,9 +81,11 @@ class UserPetCard extends StatelessWidget {
                       color: AppColors.textLightGrey,
                     ),
                     overflow: TextOverflow.ellipsis,
+                    maxLines: 1, // Add this
                   ),
                   const SizedBox(height: 8),
                   Row(
+                    mainAxisSize: MainAxisSize.min, // Add this
                     children: [
                       Icon(
                         Icons.cake,
@@ -88,10 +93,15 @@ class UserPetCard extends StatelessWidget {
                         color: AppColors.textLightGrey,
                       ),
                       const SizedBox(width: 4),
-                      Text(
-                        '${pet.age} ${pet.age == 1 ? 'month' : 'months'}',
-                        style: AppStyles.small.copyWith(
-                          color: AppColors.textLightGrey,
+                      Flexible(
+                        // Wrap with Flexible
+                        child: Text(
+                          '${pet.age} ${pet.age == 1 ? 'month' : 'months'}',
+                          style: AppStyles.small.copyWith(
+                            color: AppColors.textLightGrey,
+                          ),
+                          maxLines: 1, // Add this
+                          overflow: TextOverflow.ellipsis, // Add this
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -103,10 +113,15 @@ class UserPetCard extends StatelessWidget {
                         color: AppColors.textLightGrey,
                       ),
                       const SizedBox(width: 4),
-                      Text(
-                        pet.gender,
-                        style: AppStyles.small.copyWith(
-                          color: AppColors.textLightGrey,
+                      Flexible(
+                        // Wrap with Flexible
+                        child: Text(
+                          pet.gender,
+                          style: AppStyles.small.copyWith(
+                            color: AppColors.textLightGrey,
+                          ),
+                          maxLines: 1, // Add this
+                          overflow: TextOverflow.ellipsis, // Add this
                         ),
                       ),
                     ],

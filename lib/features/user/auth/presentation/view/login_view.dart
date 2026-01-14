@@ -34,7 +34,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         if (!next.isError && next.message == 'Login Successful') {
           Future.delayed(const Duration(seconds: 2), () {
             Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const HomeScreen()),
+              MaterialPageRoute(builder: (_) => const Homescreen()),
             );
           });
         }

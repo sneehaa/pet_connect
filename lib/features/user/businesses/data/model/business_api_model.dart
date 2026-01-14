@@ -40,14 +40,7 @@ class BusinessApiModel {
       phoneNumber: businessEntity.phoneNumber,
       adoptionPolicy: businessEntity.adoptionPolicy,
       address: businessEntity.address,
-      location: businessEntity.location != null
-          ? {
-              'type': businessEntity.location!.type,
-              'coordinates': businessEntity.location!.coordinates,
-            }
-          : null,
       role: businessEntity.role,
-      distance: businessEntity.distance,
     );
   }
 
@@ -61,16 +54,7 @@ class BusinessApiModel {
       phoneNumber: phoneNumber,
       adoptionPolicy: adoptionPolicy,
       address: address,
-      location: location != null
-          ? Location(
-              type: location!['type'] ?? 'Point',
-              coordinates: List<double>.from(
-                location!['coordinates'] ?? [0, 0],
-              ),
-            )
-          : null,
       role: role,
-      distance: distance,
     );
   }
 

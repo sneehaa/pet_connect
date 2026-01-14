@@ -86,58 +86,6 @@ class BusinessCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-
-                  // Location & Distance
-                  if (business.location != null || business.distance != null)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (business.address != null)
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.location_on,
-                                size: 14,
-                                color: AppColors.textLightGrey,
-                              ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  business.address!,
-                                  style: AppStyles.small.copyWith(
-                                    color: AppColors.textLightGrey,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-
-                        if (business.distance != null)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.directions_walk,
-                                  size: 14,
-                                  color: AppColors.primaryOrange,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  '${business.distance!.toStringAsFixed(1)} km away',
-                                  style: AppStyles.small.copyWith(
-                                    color: AppColors.primaryOrange,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                      ],
-                    ),
-
                   const SizedBox(height: 12),
 
                   // Contact Info

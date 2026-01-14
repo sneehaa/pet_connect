@@ -4,9 +4,5 @@ import 'package:pet_connect/features/user/businesses/domain/entity/business_enti
 
 abstract class BusinessRepository {
   Future<Either<Failure, List<BusinessEntity>>> getAllBusinesses();
-  Future<Either<Failure, List<BusinessEntity>>> getNearbyBusinesses({
-    required double latitude,
-    required double longitude,
-  });
   Future<Either<Failure, BusinessEntity>> getBusinessById(String businessId);
 }
