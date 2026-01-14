@@ -45,49 +45,13 @@ class BusinessRemoteDataSource {
     }
   }
 
-  // Get nearby businesses
-  Future<Either<Failure, List<BusinessEntity>>> getNearbyBusinesses({
-    required double latitude,
-    required double longitude,
-  }) async {
-    try {
-      Response response = await dio.get(
-        ApiEndpoints.businessNearby,
-        queryParameters: {'latitude': latitude, 'longitude': longitude},
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> responseData = response.data['businesses'] ?? [];
-        final List<BusinessEntity> businesses = responseData
-            .map((json) => BusinessApiModel.fromJson(json).toEntity())
-            .toList();
-        return Right(businesses);
-      } else {
-        return Left(
-          Failure(
-            error:
-                response.data["message"] ?? "Failed to load nearby businesses",
-            statusCode: response.statusCode.toString(),
-          ),
-        );
-      }
-    } on DioException catch (e) {
-      return Left(
-        Failure(
-          error: e.error.toString(),
-          statusCode: e.response?.statusCode.toString() ?? '0',
-        ),
-      );
-    }
-  }
-
   // Get business by ID
   Future<Either<Failure, BusinessEntity>> getBusinessById(
     String businessId,
   ) async {
     try {
       Response response = await dio.get(
-        '${ApiEndpoints.businessBaseUrl}/$businessId',
+        '${ApiEndpoints.businessBaseUrl}$businessId',
       );
 
       if (response.statusCode == 200) {

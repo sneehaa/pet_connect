@@ -13,7 +13,6 @@ class BusinessViewModel extends StateNotifier<BusinessState> {
   BusinessViewModel(this._businessUseCases) : super(BusinessState.initial());
 
   Future<void> getAllBusinesses() async {
-    // Reset state first, then set loading
     state = BusinessState.initial();
     state = state.copyWith(isLoading: true);
 
