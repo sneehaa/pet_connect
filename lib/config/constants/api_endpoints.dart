@@ -56,28 +56,42 @@ class ApiEndpoints {
 
   // Adoption service URL
   static const String adoptionBaseUrl =
-      "http://192.168.68.106:5503/api/adoptions/";
+      "http://192.168.68.106:5503/api/adoption";
+
+  /// Apply for adoption
   static String applyForAdoption(String petId) =>
-      "${adoptionBaseUrl}pets/$petId/adopt";
+      "$adoptionBaseUrl/pets/$petId/adopt";
   static String getAdoptionStatus(String petId) =>
-      "${adoptionBaseUrl}pets/$petId/status";
-  static const String getUserAdoptions = "${adoptionBaseUrl}history";
-  static String getPetAdoptions(String petId) =>
-      "${adoptionBaseUrl}pets/$petId";
+      "$adoptionBaseUrl/pets/$petId/status";
+  static const String getUserAdoptions = "$adoptionBaseUrl/history";
+  static const String getBusinessAdoptions =
+      "$adoptionBaseUrl/business/history";
+
+  static String getPetAdoptions(String petId) => "$adoptionBaseUrl/pets/$petId";
   static String updateAdoptionStatus(String adoptionId) =>
-      "$adoptionBaseUrl$adoptionId/status";
+      "$adoptionBaseUrl/$adoptionId/status";
   static String markAdoptionPaid(String adoptionId) =>
-      "$adoptionBaseUrl$adoptionId/mark-paid";
+      "$adoptionBaseUrl/$adoptionId/mark-paid";
   static String getAdoptionById(String adoptionId) =>
-      "$adoptionBaseUrl$adoptionId";
+      "$adoptionBaseUrl/$adoptionId";
+
+  // In your ApiEndpoints class
+  static String notificationBaseUrl =
+      "http://192.168.68.106:5505/api/notification";
+
+  // Notification endpoints
+  static String getUserNotifications = "$notificationBaseUrl/user";
+  static String getBusinessNotifications = "$notificationBaseUrl/business";
+  static String sendAdoptionApprovedNotification =
+      "$notificationBaseUrl/adoption-approved";
+  static String sendAdoptionRejectedNotification =
+      "$notificationBaseUrl/adoption-rejected";
+  static String clearAllNotifications = "$notificationBaseUrl/clear";
 
   // Payment service URL
-  static const String paymentBaseUrl =
-      "http://192.168.68.106:5504/api/payments/";
-  static const String initiatePayment = "${paymentBaseUrl}khalti/initiate";
-  static const String verifyPayment = "${paymentBaseUrl}khalti/verify";
-  static const String getUserPayments =
-      "${paymentBaseUrl}transactions/my-history";
-  static String getReceipt(String paymentId) =>
-      "${paymentBaseUrl}receipts/$paymentId";
+  static String paymentBaseUrl = "http://192.168.68.106:5504/api/payments/";
+  static String initiatePayment = "${paymentBaseUrl}khalti/initiate";
+  static String verifyPayment = "${paymentBaseUrl}khalti/verify";
+  static String getUserPayments = "${paymentBaseUrl}transactions/my-history";
+  String getReceipt(String paymentId) => "${paymentBaseUrl}receipts/$paymentId";
 }
