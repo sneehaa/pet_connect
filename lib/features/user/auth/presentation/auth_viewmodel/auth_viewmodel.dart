@@ -42,7 +42,7 @@ class AuthViewModel extends StateNotifier<AuthState> {
         state = state.copyWith(
           isLoading: false,
           message: 'OTP sent to your email',
-          contactInfo: entity.email,
+          email: entity.email,
           flow: AuthFlow.otpSent,
           isError: false,
         );
@@ -51,10 +51,10 @@ class AuthViewModel extends StateNotifier<AuthState> {
   }
 
   Future<void> verifyOtp(String otp) async {
-    if (state.contactInfo == null) return;
+    if (state.email == null) return;
 
     state = state.copyWith(isLoading: true, isError: false);
-    final result = await _verifyOtpUseCase.execute(state.contactInfo!, otp);
+    final result = await _verifyOtpUseCase.execute(state.email!, otp);
 
     result.fold(
       (failure) => state = state.copyWith(
@@ -72,10 +72,10 @@ class AuthViewModel extends StateNotifier<AuthState> {
   }
 
   Future<void> resendOtp() async {
-    if (state.contactInfo == null) return;
+    if (state.email == null) return;
 
     state = state.copyWith(isLoading: true);
-    final result = await _resendOtpUseCase.execute(state.contactInfo!);
+    final result = await _resendOtpUseCase.execute(state.email!);
 
     result.fold(
       (failure) => state = state.copyWith(

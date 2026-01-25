@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pet_connect/config/themes/app_colors.dart';
 import 'package:pet_connect/config/themes/app_styles.dart';
 import 'package:pet_connect/core/utils/snackbar_utils.dart';
-import 'package:pet_connect/features/business/business_auth/presentation/auth_viewmodel/auth_viewmodel.dart';
-import 'package:pet_connect/features/business/business_auth/presentation/state/auth_state.dart';
-import 'package:pet_connect/features/business/business_auth/presentation/view/upload_document.dart';
+import 'package:pet_connect/features/user/auth/presentation/auth_viewmodel/auth_viewmodel.dart';
+import 'package:pet_connect/features/user/auth/presentation/state/auth_state.dart';
+import 'package:pet_connect/features/user/home/homescreen.dart';
 
 class UserOtpVerificationScreen extends ConsumerStatefulWidget {
   const UserOtpVerificationScreen({super.key});
@@ -22,7 +22,7 @@ class _UserOtpVerificationScreenState
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<BusinessState>(businessViewModelProvider, (previous, next) {
+    ref.listen<AuthState>(authViewModelProvider, (previous, next) {
       if (previous?.isLoading == true && next.isLoading == false) {
         if (next.message != null) {
           showSnackBar(
@@ -31,16 +31,16 @@ class _UserOtpVerificationScreenState
             isSuccess: !next.isError,
           );
         }
-        if (next.flow == BusinessFlow.otpVerified) {
+        if (next.flow == AuthFlow.authenticated) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => const UploadBusinessDocument()),
+            MaterialPageRoute(builder: (_) => const Homescreen()),
           );
         }
       }
     });
 
-    final state = ref.watch(businessViewModelProvider);
+    final state = ref.watch(authViewModelProvider);
 
     return Scaffold(
       backgroundColor: AppColors.primaryWhite,
@@ -68,12 +68,11 @@ class _UserOtpVerificationScreenState
                 ),
                 const SizedBox(height: 40),
 
-                // Adjusted for 4 Digits
                 TextFormField(
                   controller: _otpController,
                   keyboardType: TextInputType.number,
                   textAlign: TextAlign.center,
-                  maxLength: 4, // Updated to 4
+                  maxLength: 4,
                   style: AppStyles.headline3.copyWith(
                     letterSpacing: 25,
                     fontSize: 32,
@@ -82,7 +81,7 @@ class _UserOtpVerificationScreenState
                     counterText: "",
                     filled: true,
                     fillColor: AppColors.backgroundGrey.withOpacity(0.45),
-                    hintText: "0000", // Updated hint
+                    hintText: "0000",
                     hintStyle: AppStyles.subtitle.copyWith(
                       letterSpacing: 25,
                       color: Colors.grey.withOpacity(0.3),
@@ -113,7 +112,7 @@ class _UserOtpVerificationScreenState
                         onPressed: () {
                           if (_formKey.currentState!.validate()) {
                             ref
-                                .read(businessViewModelProvider.notifier)
+                                .read(authViewModelProvider.notifier)
                                 .verifyOtp(_otpController.text.trim());
                           }
                         },
@@ -132,7 +131,7 @@ class _UserOtpVerificationScreenState
                   onPressed: state.isLoading
                       ? null
                       : () => ref
-                            .read(businessViewModelProvider.notifier)
+                            .read(authViewModelProvider.notifier)
                             .resendOtp(),
                   child: Text(
                     "Resend Code",

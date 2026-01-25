@@ -17,7 +17,8 @@ class ApiEndpoints {
   static const String getAllUsers = "${userBaseUrl}getAll";
   static String deleteUserAccount(String userId) =>
       "${userBaseUrl}delete/$userId";
-  static const String sendOTP = "${userBaseUrl}sendOTP";
+  static const String userVerifyEmail = "${userBaseUrl}verify-email";
+  static const String userResendOTP = "${userBaseUrl}resend-otp";
 
   // Business service URL
   static const String businessBaseUrl =

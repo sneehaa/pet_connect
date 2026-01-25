@@ -59,7 +59,7 @@ class AuthRemoteDataSource {
   Future<Either<Failure, bool>> verifyOtp(String email, String otp) async {
     try {
       final response = await dio.post(
-        ApiEndpoints.businessVerifyEmail,
+        ApiEndpoints.userVerifyEmail,
         data: {"email": email, "otp": otp},
       );
 
@@ -78,10 +78,10 @@ class AuthRemoteDataSource {
     }
   }
 
-   Future<Either<Failure, bool>> resendOtp(String email) async {
+  Future<Either<Failure, bool>> resendOtp(String email) async {
     try {
       final response = await dio.post(
-        ApiEndpoints.businessResendOTP,
+        ApiEndpoints.userResendOTP,
         data: {"email": email},
       );
 
