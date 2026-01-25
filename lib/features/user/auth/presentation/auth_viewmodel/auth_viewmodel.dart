@@ -65,7 +65,7 @@ class AuthViewModel extends StateNotifier<AuthState> {
       (success) => state = state.copyWith(
         isLoading: false,
         message: 'Email Verified Successfully',
-        flow: AuthFlow.authenticated, // Move to login or dashboard
+        flow: AuthFlow.authenticated, 
         isError: false,
       ),
     );

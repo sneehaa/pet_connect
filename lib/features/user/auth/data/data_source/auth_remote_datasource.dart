@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,6 +25,7 @@ class AuthRemoteDataSource {
 
   AuthRemoteDataSource(this.dio, this.secureStorage);
 
+  // features/user/auth/data/data_source/auth_remote_datasource.dart
   Future<Either<Failure, bool>> registerUser(AuthEntity user) async {
     try {
       AuthApiModel apiModel = AuthApiModel.fromEntity(user);
@@ -36,7 +39,23 @@ class AuthRemoteDataSource {
           "phoneNumber": apiModel.phoneNumber,
         },
       );
+
       if (response.statusCode == 200 || response.statusCode == 201) {
+        await secureStorage.write(
+          key: 'user_fullName',
+          value: apiModel.fullName,
+        );
+        await secureStorage.write(key: 'user_email', value: apiModel.email);
+        await secureStorage.write(
+          key: 'user_phoneNumber',
+          value: apiModel.phoneNumber,
+        );
+        final userJson = apiModel.toJson();
+        await secureStorage.write(
+          key: 'user_data',
+          value: jsonEncode(userJson),
+        );
+
         return const Right(true);
       } else {
         return Left(
