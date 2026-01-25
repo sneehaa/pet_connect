@@ -5,12 +5,14 @@ import 'package:pet_connect/config/themes/app_styles.dart';
 class CustomAppBar extends StatelessWidget {
   final int selectedIndex;
   final String userName;
+  final int unreadNotificationCount;
   final VoidCallback? onNotificationTap;
 
   const CustomAppBar({
     super.key,
     required this.selectedIndex,
     this.userName = 'Pet Lover',
+    this.unreadNotificationCount = 0,
     this.onNotificationTap,
   });
 
@@ -101,22 +103,35 @@ class CustomAppBar extends StatelessWidget {
                           color: AppColors.textBlack,
                         ),
                       ),
-                      Positioned(
-                        right: 8,
-                        top: 8,
-                        child: Container(
-                          width: 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: AppColors.errorRed,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: AppColors.primaryWhite,
-                              width: 1.5,
+                      if (unreadNotificationCount > 0)
+                        Positioned(
+                          right: 5,
+                          top: 5,
+                          child: Container(
+                            width: 20,
+                            height: 20,
+                            decoration: BoxDecoration(
+                              color: AppColors.errorRed,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppColors.primaryWhite,
+                                width: 2,
+                              ),
+                            ),
+                            child: Center(
+                              child: Text(
+                                unreadNotificationCount > 9
+                                    ? '9+'
+                                    : unreadNotificationCount.toString(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),

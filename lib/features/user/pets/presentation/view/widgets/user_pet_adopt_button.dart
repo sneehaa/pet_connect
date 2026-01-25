@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:pet_connect/config/themes/app_colors.dart';
 import 'package:pet_connect/config/themes/app_styles.dart';
+import 'package:pet_connect/features/user/adoption/presentation/view/adoption_application_screen.dart';
 import 'package:pet_connect/features/user/pets/domain/entity/pet_entity.dart';
-
-import 'user_pet_dialogs.dart';
 
 class UserPetAdoptButton extends StatelessWidget {
   final UserPetEntity pet;
@@ -40,7 +39,7 @@ class UserPetAdoptButton extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
-              showAdoptionDialog(context, pet);
+              _navigateToAdoptionScreen(context);
             },
             borderRadius: BorderRadius.circular(20),
             child: Ink(
@@ -122,6 +121,20 @@ class UserPetAdoptButton extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _navigateToAdoptionScreen(BuildContext context) {
+    if (ModalRoute.of(context)?.settings.name == '/adoption-application') {
+      return;
+    }
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) =>
+            AdoptionApplicationScreen(petId: pet.id, petName: pet.name),
+        fullscreenDialog: true, 
       ),
     );
   }

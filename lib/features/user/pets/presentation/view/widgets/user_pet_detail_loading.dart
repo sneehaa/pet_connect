@@ -140,7 +140,6 @@ class _UserPetDetailLoadingState extends State<UserPetDetailLoading>
 
                 // Floating paw prints
                 ...List.generate(3, (index) {
-                  final angle = (index * 120) * 3.14159 / 180;
                   return AnimatedBuilder(
                     animation: _controller,
                     builder: (context, child) {
