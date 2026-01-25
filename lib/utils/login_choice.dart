@@ -55,7 +55,7 @@ class _LoginChoiceScreenState extends State<LoginChoiceScreen>
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    
 
     return Scaffold(
       body: Container(
