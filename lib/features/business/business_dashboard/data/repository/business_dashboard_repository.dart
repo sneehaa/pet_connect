@@ -20,13 +20,13 @@ final businessDashboardRepositoryProvider =
 
 class BusinessDashboardRemoteRepository implements BusinessDashboardRepository {
   final PetsRemoteDataSource _remoteDataSource;
-  final AdoptionRemoteDataSource _adoptionremoteDataSource;
+  final AdoptionRemoteDataSource _adoptionRemoteDataSource;
   final FlutterSecureStorage _storage;
 
   BusinessDashboardRemoteRepository(
     this._remoteDataSource,
-    this._adoptionremoteDataSource,
-    this._storage,
+    this._adoptionRemoteDataSource,
+    this._storage, 
   );
 
   @override
@@ -63,35 +63,82 @@ class BusinessDashboardRemoteRepository implements BusinessDashboardRepository {
     return _remoteDataSource.updatePetStatus(petId, status);
   }
 
+  // Business-side adoption methods
   @override
-  Future<Either<Failure, AdoptionEntity>> applyAdoption(
+  Future<Either<Failure, List<BusinessAdoptionEntity>>> getPetAdoptions(
     String petId,
-    String message,
   ) {
-    return _adoptionremoteDataSource.applyAdoption(petId, message);
+    return _adoptionRemoteDataSource
+        .getPetAdoptions(petId)
+        .then(
+          (result) => result.fold(
+            (failure) => Left(failure),
+            (models) => Right(models),
+          ),
+        );
   }
 
   @override
-  Future<Either<Failure, AdoptionEntity>> getAdoptionStatus(String petId) {
-    return _adoptionremoteDataSource.getAdoptionStatus(petId);
-  }
-
-  @override
-  Future<Either<Failure, List<AdoptionEntity>>> getAdoptionHistory() {
-    return _adoptionremoteDataSource.getAdoptionHistory();
-  }
-
-  @override
-  Future<Either<Failure, List<AdoptionEntity>>> getPetAdoptions(String petId) {
-    return _adoptionremoteDataSource.getPetAdoptions(petId);
-  }
-
-  @override
-  Future<Either<Failure, AdoptionEntity>> updateAdoptionStatus(
+  Future<Either<Failure, BusinessAdoptionEntity>> updateAdoptionStatus(
     String adoptionId,
     String status,
+    String? rejectionReason,
   ) {
-    return _adoptionremoteDataSource.updateAdoptionStatus(adoptionId, status);
+    return _adoptionRemoteDataSource
+        .updateAdoptionStatus(
+          adoptionId: adoptionId,
+          status: status,
+          rejectionReason: rejectionReason,
+        )
+        .then(
+          (result) =>
+              result.fold((failure) => Left(failure), (model) => Right(model)),
+        );
+  }
+
+  @override
+  Future<Either<Failure, BusinessAdoptionEntity>> approveAdoption(
+    String adoptionId,
+  ) {
+    return _adoptionRemoteDataSource
+        .approveAdoption(adoptionId)
+        .then(
+          (result) =>
+              result.fold((failure) => Left(failure), (model) => Right(model)),
+        );
+  }
+
+  @override
+  Future<Either<Failure, BusinessAdoptionEntity>> rejectAdoption(
+    String adoptionId,
+    String reason,
+  ) {
+    return _adoptionRemoteDataSource
+        .rejectAdoption(adoptionId, reason)
+        .then(
+          (result) =>
+              result.fold((failure) => Left(failure), (model) => Right(model)),
+        );
+  }
+
+  @override
+  Future<Either<Failure, BusinessAdoptionEntity>> getAdoptionById(
+    String adoptionId,
+  ) {
+    return _adoptionRemoteDataSource
+        .getAdoptionById(adoptionId)
+        .then(
+          (result) =>
+              result.fold((failure) => Left(failure), (model) => Right(model)),
+        );
+  }
+
+  @override
+  Future<Either<Failure, List<BusinessAdoptionEntity>>> getBusinessAdoptions() {
+    return _adoptionRemoteDataSource.getBusinessAdoptions().then(
+      (result) =>
+          result.fold((failure) => Left(failure), (models) => Right(models)),
+    );
   }
 
   @override

@@ -1,14 +1,12 @@
-import 'dart:convert';
-
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:pet_connect/config/constants/api_endpoints.dart';
 import 'package:pet_connect/core/failure/failure.dart';
 import 'package:pet_connect/core/network/http_service.dart';
 import 'package:pet_connect/core/provider/flutter_secure_storage.dart';
-
-import '../model/adoption_model.dart';
+import 'package:pet_connect/features/business/business_dashboard/data/model/adoption_model.dart';
 
 final adoptionRemoteDataSourceProvider = Provider<AdoptionRemoteDataSource>(
   (ref) => AdoptionRemoteDataSource(
@@ -23,185 +21,161 @@ class AdoptionRemoteDataSource {
 
   AdoptionRemoteDataSource(this.dio, this.secureStorage);
 
-  // Helper method to get auth token
   Future<String?> _getAuthToken() async {
-    // Try user token first, then business token
-    final userToken = await secureStorage.read(key: 'authToken');
-    if (userToken != null) return userToken;
-
-    final businessToken = await secureStorage.read(key: 'businessAuthToken');
-    if (businessToken != null) return businessToken;
-
-    throw Exception('No authentication token found');
+    return await secureStorage.read(key: 'businessAuthToken');
   }
 
-  // Helper method to get user ID from token
-  Future<String?> _getUserIdFromToken() async {
-    final token = await _getAuthToken();
-    if (token == null) return null;
-
-    try {
-      // Decode JWT token to get user ID
-      final parts = token.split('.');
-      if (parts.length != 3) return null;
-
-      final payload = parts[1];
-      final normalized = base64Url.normalize(payload);
-      final decoded = utf8.decode(base64Url.decode(normalized));
-      final payloadMap = json.decode(decoded) as Map<String, dynamic>;
-
-      return payloadMap['userId']?.toString() ?? payloadMap['_id']?.toString();
-    } catch (e) {
-      return null;
-    }
-  }
-
-  Future<Either<Failure, AdoptionModel>> applyAdoption(
-    String petId,
-    String message,
-  ) async {
+  Future<Either<Failure, List<BusinessAdoptionModel>>>
+  getBusinessAdoptions() async {
     try {
       final token = await _getAuthToken();
-      final userId = await _getUserIdFromToken();
-
-      if (userId == null) {
-        return Left(Failure(error: 'User not authenticated'));
-      }
-
-      final response = await dio.post(
-        '/pets/$petId/adopt',
-        data: {'message': message},
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
-
-      return Right(AdoptionModel.fromJson(response.data['adoption']));
-    } on DioException catch (e) {
-      return Left(
-        Failure(
-          error:
-              e.response?.data?['message'] ??
-              e.message ??
-              'Failed to apply for adoption',
-          statusCode: e.response?.statusCode?.toString() ?? '0',
-        ),
-      );
-    } catch (e) {
-      return Left(Failure(error: 'Unexpected error: $e'));
-    }
-  }
-
-  Future<Either<Failure, AdoptionModel>> getAdoptionStatus(String petId) async {
-    try {
-      final token = await _getAuthToken();
-
       final response = await dio.get(
-        '/pets/$petId/status',
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
-
-      return Right(AdoptionModel.fromJson(response.data['adoption']));
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 404) {
-        return Left(Failure(error: 'No adoption application found'));
-      }
-      return Left(
-        Failure(
-          error:
-              e.response?.data?['message'] ??
-              e.message ??
-              'Failed to get adoption status',
-          statusCode: e.response?.statusCode?.toString() ?? '0',
-        ),
-      );
-    } catch (e) {
-      return Left(Failure(error: 'Unexpected error: $e'));
-    }
-  }
-
-  Future<Either<Failure, List<AdoptionModel>>> getAdoptionHistory() async {
-    try {
-      final token = await _getAuthToken();
-
-      final response = await dio.get(
-        '/history',
+        ApiEndpoints.getBusinessAdoptions,
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
       final adoptions = (response.data['adoptions'] as List)
-          .map((e) => AdoptionModel.fromJson(e))
+          .map((e) => BusinessAdoptionModel.fromJson(e))
           .toList();
       return Right(adoptions);
     } on DioException catch (e) {
       return Left(
         Failure(
-          error:
-              e.response?.data?['message'] ??
-              e.message ??
-              'Failed to get adoption history',
+          error: e.response?.data?['message'] ?? 'Failed to fetch adoptions',
           statusCode: e.response?.statusCode?.toString() ?? '0',
         ),
       );
     } catch (e) {
-      return Left(Failure(error: 'Unexpected error: $e'));
+      return Left(Failure(error: e.toString()));
     }
   }
 
-  Future<Either<Failure, List<AdoptionModel>>> getPetAdoptions(
+  Future<Either<Failure, List<BusinessAdoptionModel>>> getPetAdoptions(
     String petId,
   ) async {
     try {
       final token = await _getAuthToken();
-
       final response = await dio.get(
-        '/pets/$petId',
+        ApiEndpoints.getPetAdoptions(petId),
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
       final adoptions = (response.data['adoptions'] as List)
-          .map((e) => AdoptionModel.fromJson(e))
+          .map((e) => BusinessAdoptionModel.fromJson(e))
           .toList();
       return Right(adoptions);
     } on DioException catch (e) {
       return Left(
         Failure(
-          error:
-              e.response?.data?['message'] ??
-              e.message ??
-              'Failed to get pet adoptions',
+          error: e.response?.data?['message'] ?? 'Failed to fetch applications',
           statusCode: e.response?.statusCode?.toString() ?? '0',
         ),
       );
     } catch (e) {
-      return Left(Failure(error: 'Unexpected error: $e'));
+      return Left(Failure(error: e.toString()));
     }
   }
 
-  Future<Either<Failure, AdoptionModel>> updateAdoptionStatus(
-    String adoptionId,
-    String status,
-  ) async {
+  Future<Either<Failure, BusinessAdoptionModel>> updateAdoptionStatus({
+    required String adoptionId,
+    required String status,
+    String? rejectionReason,
+  }) async {
     try {
       final token = await _getAuthToken();
-
       final response = await dio.put(
-        '/$adoptionId/status',
-        data: {'status': status},
+        ApiEndpoints.updateAdoptionStatus(adoptionId),
+        data: {
+          'status': status,
+          if (rejectionReason != null) 'reason': rejectionReason,
+        },
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
-      return Right(AdoptionModel.fromJson(response.data['adoption']));
+      return Right(BusinessAdoptionModel.fromJson(response.data['adoption']));
+    } on DioException catch (e) {
+      return Left(
+        Failure(
+          error: e.response?.data?['message'] ?? 'Update failed',
+          statusCode: e.response?.statusCode?.toString() ?? '0',
+        ),
+      );
+    } catch (e) {
+      return Left(Failure(error: e.toString()));
+    }
+  }
+
+  Future<Either<Failure, BusinessAdoptionModel>> approveAdoption(
+    String adoptionId,
+  ) async {
+    try {
+      final token = await _getAuthToken();
+      final response = await dio.put(
+        ApiEndpoints.updateAdoptionStatus(adoptionId),
+        data: {'status': 'approved'},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      return Right(BusinessAdoptionModel.fromJson(response.data['adoption']));
+    } on DioException catch (e) {
+      return Left(
+        Failure(
+          error: e.response?.data?['message'] ?? 'Approval failed',
+          statusCode: e.response?.statusCode?.toString() ?? '0',
+        ),
+      );
+    } catch (e) {
+      return Left(Failure(error: e.toString()));
+    }
+  }
+
+  Future<Either<Failure, BusinessAdoptionModel>> rejectAdoption(
+    String adoptionId,
+    String reason,
+  ) async {
+    try {
+      final token = await _getAuthToken();
+      final response = await dio.put(
+        ApiEndpoints.updateAdoptionStatus(adoptionId),
+        data: {'status': 'rejected', 'reason': reason},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      return Right(BusinessAdoptionModel.fromJson(response.data['adoption']));
+    } on DioException catch (e) {
+      return Left(
+        Failure(
+          error: e.response?.data?['message'] ?? 'Rejection failed',
+          statusCode: e.response?.statusCode?.toString() ?? '0',
+        ),
+      );
+    } catch (e) {
+      return Left(Failure(error: e.toString()));
+    }
+  }
+
+  Future<Either<Failure, BusinessAdoptionModel>> getAdoptionById(
+    String adoptionId,
+  ) async {
+    try {
+      final token = await _getAuthToken();
+      final response = await dio.get(
+        ApiEndpoints.getAdoptionById(adoptionId),
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      return Right(BusinessAdoptionModel.fromJson(response.data['adoption']));
     } on DioException catch (e) {
       return Left(
         Failure(
           error:
               e.response?.data?['message'] ??
-              e.message ??
-              'Failed to update adoption status',
+              'Failed to fetch adoption details',
           statusCode: e.response?.statusCode?.toString() ?? '0',
         ),
       );
     } catch (e) {
-      return Left(Failure(error: 'Unexpected error: $e'));
+      return Left(Failure(error: e.toString()));
     }
   }
 }
