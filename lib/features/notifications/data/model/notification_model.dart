@@ -3,7 +3,7 @@ import 'package:pet_connect/features/notifications/domain/entity/notification_en
 class NotificationModel extends NotificationEntity {
   const NotificationModel({
     required super.id,
-    required super.userId,
+    super.userId,
     super.businessId,
     required super.type,
     required super.subject,

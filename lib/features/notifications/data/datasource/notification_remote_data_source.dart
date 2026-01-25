@@ -22,14 +22,27 @@ class NotificationRemoteDataSource {
 
   NotificationRemoteDataSource(this.dio, this.secureStorage);
 
-  Future<String?> _getAuthToken() async {
-    return await secureStorage.read(key: 'businessAuthToken');
+  // Helper method to determine which token to use
+  Future<String?> _getAuthToken({required bool isUser}) async {
+    if (isUser) {
+      // Get user token
+      return await secureStorage.read(key: 'authenticationToken');
+    } else {
+      // Get business token
+      return await secureStorage.read(key: 'businessAuthToken');
+    }
   }
 
   Future<Either<Failure, List<NotificationModel>>>
   getUserNotifications() async {
     try {
-      final token = await _getAuthToken();
+      // Use user token for user notifications
+      final token = await _getAuthToken(isUser: true);
+
+      if (token == null) {
+        return Left(Failure(error: 'User authentication token not found'));
+      }
+
       final response = await dio.get(
         ApiEndpoints.getUserNotifications,
         options: Options(headers: {'Authorization': 'Bearer $token'}),
@@ -43,7 +56,8 @@ class NotificationRemoteDataSource {
       return Left(
         Failure(
           error:
-              e.response?.data?['message'] ?? 'Failed to fetch notifications',
+              e.response?.data?['message'] ??
+              'Failed to fetch user notifications',
           statusCode: e.response?.statusCode?.toString() ?? '0',
         ),
       );
@@ -55,7 +69,13 @@ class NotificationRemoteDataSource {
   Future<Either<Failure, List<NotificationModel>>>
   getBusinessNotifications() async {
     try {
-      final token = await _getAuthToken();
+      // Use business token for business notifications
+      final token = await _getAuthToken(isUser: false);
+
+      if (token == null) {
+        return Left(Failure(error: 'Business authentication token not found'));
+      }
+
       final response = await dio.get(
         ApiEndpoints.getBusinessNotifications,
         options: Options(headers: {'Authorization': 'Bearer $token'}),
@@ -69,7 +89,8 @@ class NotificationRemoteDataSource {
       return Left(
         Failure(
           error:
-              e.response?.data?['message'] ?? 'Failed to fetch notifications',
+              e.response?.data?['message'] ??
+              'Failed to fetch business notifications',
           statusCode: e.response?.statusCode?.toString() ?? '0',
         ),
       );
@@ -82,7 +103,16 @@ class NotificationRemoteDataSource {
     String notificationId,
   ) async {
     try {
-      final token = await _getAuthToken();
+      // Try both tokens - whichever works
+      String? token = await _getAuthToken(isUser: false); // Try business first
+      token ??= await _getAuthToken(
+        isUser: true,
+      ); // If business token not found, try user
+
+      if (token == null) {
+        return Left(Failure(error: 'Authentication token not found'));
+      }
+
       final response = await dio.put(
         '${ApiEndpoints.notificationBaseUrl}/$notificationId/read',
         options: Options(headers: {'Authorization': 'Bearer $token'}),
@@ -105,9 +135,16 @@ class NotificationRemoteDataSource {
 
   Future<Either<Failure, bool>> clearAllNotifications() async {
     try {
-      final token = await _getAuthToken();
+      // Try both tokens
+      String? token = await _getAuthToken(isUser: false);
+      token ??= await _getAuthToken(isUser: true);
+
+      if (token == null) {
+        return Left(Failure(error: 'Authentication token not found'));
+      }
+
       final response = await dio.delete(
-        ApiEndpoints.clearAllNotifications,
+        '${ApiEndpoints.notificationBaseUrl}/clear',
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 

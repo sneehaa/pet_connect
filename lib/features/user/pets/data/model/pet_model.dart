@@ -13,9 +13,10 @@ class UserPetModel extends UserPetEntity {
     super.medicalInfo,
     super.photos,
     required super.businessId,
-    super.available,
+    super.status = 'available',
     super.createdAt,
     super.updatedAt,
+    required super.amount,
   });
 
   factory UserPetModel.fromJson(Map<String, dynamic> json) {
@@ -31,7 +32,8 @@ class UserPetModel extends UserPetEntity {
       medicalInfo: json['medicalInfo'],
       photos: List<String>.from(json['photos'] ?? []),
       businessId: json['businessId'],
-      available: json['available'] ?? true,
+      status: json['status'] ?? 'available',
+      amount: json['amount'],
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : null,
@@ -54,7 +56,8 @@ class UserPetModel extends UserPetEntity {
       'medicalInfo': medicalInfo,
       'photos': photos,
       'businessId': businessId,
-      'available': available,
+      'amount': amount,
+      'status': status,
     };
   }
 }

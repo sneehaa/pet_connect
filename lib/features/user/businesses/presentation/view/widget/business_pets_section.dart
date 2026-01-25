@@ -38,6 +38,34 @@ class _BusinessPetsSectionState extends ConsumerState<BusinessPetsSection>
     super.dispose();
   }
 
+  // Helper method to get status display text
+  String _getStatusText(String status) {
+    switch (status.toLowerCase()) {
+      case 'available':
+        return 'Available';
+      case 'booked':
+        return 'Booked';
+      case 'adopted':
+        return 'Adopted';
+      default:
+        return status;
+    }
+  }
+
+  // Helper method to get status color
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'available':
+        return AppColors.successGreen;
+      case 'booked':
+        return AppColors.warningYellow;
+      case 'adopted':
+        return AppColors.errorRed;
+      default:
+        return AppColors.textLightGrey;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final petState = ref.watch(petViewModelProvider);
@@ -182,6 +210,39 @@ class _BusinessPetsSectionState extends ConsumerState<BusinessPetsSection>
                               Icons.pets,
                               size: 60,
                               color: AppColors.primaryOrange.withOpacity(0.3),
+                            ),
+                          ),
+                        // Status Badge
+                        if (pet.status.toLowerCase() != 'available')
+                          Positioned(
+                            top: 12,
+                            left: 12,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _getStatusColor(
+                                  pet.status,
+                                ).withOpacity(0.9),
+                                borderRadius: BorderRadius.circular(6),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.2),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                _getStatusText(pet.status),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
                           ),
                         // Favorite Button
@@ -333,7 +394,9 @@ class _BusinessPetsSectionState extends ConsumerState<BusinessPetsSection>
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.green.withOpacity(0.1),
+                                    color: _getStatusColor(
+                                      pet.status,
+                                    ).withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Row(
@@ -341,18 +404,18 @@ class _BusinessPetsSectionState extends ConsumerState<BusinessPetsSection>
                                       Container(
                                         width: 6,
                                         height: 6,
-                                        decoration: const BoxDecoration(
-                                          color: Colors.green,
+                                        decoration: BoxDecoration(
+                                          color: _getStatusColor(pet.status),
                                           shape: BoxShape.circle,
                                         ),
                                       ),
                                       const SizedBox(width: 4),
-                                      const Text(
-                                        'Available',
+                                      Text(
+                                        _getStatusText(pet.status),
                                         style: TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w600,
-                                          color: Colors.green,
+                                          color: _getStatusColor(pet.status),
                                         ),
                                       ),
                                     ],

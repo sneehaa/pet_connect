@@ -27,7 +27,7 @@ class PetState {
       'minAge': null,
       'maxAge': null,
       'vaccinated': null,
-      'available': true,
+      'status': 'available',
     },
   });
 

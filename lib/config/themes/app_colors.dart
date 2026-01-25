@@ -15,5 +15,6 @@ class AppColors {
   static const Color background = Color.fromARGB(255, 255, 248, 240);
 
   static const Color successGreen = Color.fromARGB(255, 4, 185, 52);
+  static const Color warningYellow = Color.fromARGB(255, 208, 146, 0);
   static const Color iconGrey = Color(0xFF9E9E9E);
 }
