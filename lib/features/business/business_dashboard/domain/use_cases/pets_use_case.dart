@@ -5,7 +5,6 @@ import 'package:pet_connect/features/business/business_dashboard/data/repository
 import 'package:pet_connect/features/business/business_dashboard/domain/entity/pet_entity.dart';
 import 'package:pet_connect/features/business/business_dashboard/domain/repository/business_dashboard_repository.dart';
 
-/// Get Pets UseCase
 final getPetsUseCaseProvider = Provider.autoDispose<GetPetsUseCase>((ref) {
   return GetPetsUseCase(ref.read(businessDashboardRepositoryProvider));
 });
@@ -19,7 +18,6 @@ class GetPetsUseCase {
   }
 }
 
-/// Add Pet UseCase
 final addPetUseCaseProvider = Provider.autoDispose<AddPetUseCase>((ref) {
   return AddPetUseCase(ref.read(businessDashboardRepositoryProvider));
 });
@@ -36,7 +34,6 @@ class AddPetUseCase {
   }
 }
 
-/// Update Pet UseCase
 final updatePetUseCaseProvider = Provider.autoDispose<UpdatePetUseCase>((ref) {
   return UpdatePetUseCase(ref.read(businessDashboardRepositoryProvider));
 });
@@ -48,13 +45,12 @@ class UpdatePetUseCase {
   Future<Either<Failure, PetEntity>> execute(
     PetEntity pet,
     List<String>? photos,
-    String petId
+    String petId,
   ) {
     return repository.updatePet(pet, photos, petId);
   }
 }
 
-/// Delete Pet UseCase
 final deletePetUseCaseProvider = Provider.autoDispose<DeletePetUseCase>((ref) {
   return DeletePetUseCase(ref.read(businessDashboardRepositoryProvider));
 });
@@ -68,18 +64,18 @@ class DeletePetUseCase {
   }
 }
 
-/// Change Pet Status UseCase
-final changePetStatusUseCaseProvider = Provider.autoDispose<ChangePetStatusUseCase>((ref) {
-  return ChangePetStatusUseCase(
-    ref.read(businessDashboardRepositoryProvider),
-  );
-});
+final changePetStatusUseCaseProvider =
+    Provider.autoDispose<ChangePetStatusUseCase>((ref) {
+      return ChangePetStatusUseCase(
+        ref.read(businessDashboardRepositoryProvider),
+      );
+    });
 
 class ChangePetStatusUseCase {
   final BusinessDashboardRepository repository;
   ChangePetStatusUseCase(this.repository);
 
-  Future<Either<Failure, bool>> execute(String petId, bool available) {
-    return repository.changePetStatus(petId, available);
+  Future<Either<Failure, bool>> execute(String petId, String status) {
+    return repository.changePetStatus(petId, status);
   }
 }

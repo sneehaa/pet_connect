@@ -9,74 +9,106 @@ final authViewModelProvider = StateNotifierProvider<AuthViewModel, AuthState>(
   (ref) => AuthViewModel(
     ref.read(registerUseCaseProvider),
     ref.read(loginUseCaseProvider),
+    ref.read(verifyOtpUseCaseProvider),
+    ref.read(resendOtpUseCaseProvider),
   ),
 );
 
 class AuthViewModel extends StateNotifier<AuthState> {
   final RegisterUseCase _registerUseCase;
   final LoginUseCase _loginUseCase;
+  final VerifyOtpUseCase _verifyOtpUseCase;
+  final ResendOtpUseCase _resendOtpUseCase;
 
-  AuthViewModel(this._registerUseCase, this._loginUseCase)
-    : super(AuthState.initial());
+  AuthViewModel(
+    this._registerUseCase,
+    this._loginUseCase,
+    this._verifyOtpUseCase,
+    this._resendOtpUseCase,
+  ) : super(AuthState.initial());
 
   Future<void> registerUser(AuthEntity entity) async {
-    // Reset state first, then set loading
-    state = AuthState.initial();
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, isError: false);
 
     final result = await _registerUseCase.registerUser(entity);
 
     result.fold(
-      (failure) {
+      (failure) => state = state.copyWith(
+        isLoading: false,
+        message: failure.error,
+        isError: true,
+      ),
+      (success) {
         state = state.copyWith(
           isLoading: false,
-          message: failure.error,
-          isError: true,
+          message: 'OTP sent to your email',
+          contactInfo: entity.email,
+          flow: AuthFlow.otpSent,
+          isError: false,
         );
       },
-      (success) {
-        if (success) {
-          state = state.copyWith(
-            isLoading: false,
-            message: 'User Registered Successfully',
-            isError: false,
-          );
-        } else {
-          state = state.copyWith(
-            isLoading: false,
-            message: 'Registration failed. Please try again.',
-            isError: true,
-          );
-        }
-      },
+    );
+  }
+
+  Future<void> verifyOtp(String otp) async {
+    if (state.contactInfo == null) return;
+
+    state = state.copyWith(isLoading: true, isError: false);
+    final result = await _verifyOtpUseCase.execute(state.contactInfo!, otp);
+
+    result.fold(
+      (failure) => state = state.copyWith(
+        isLoading: false,
+        message: failure.error,
+        isError: true,
+      ),
+      (success) => state = state.copyWith(
+        isLoading: false,
+        message: 'Email Verified Successfully',
+        flow: AuthFlow.authenticated, // Move to login or dashboard
+        isError: false,
+      ),
+    );
+  }
+
+  Future<void> resendOtp() async {
+    if (state.contactInfo == null) return;
+
+    state = state.copyWith(isLoading: true);
+    final result = await _resendOtpUseCase.execute(state.contactInfo!);
+
+    result.fold(
+      (failure) => state = state.copyWith(
+        isLoading: false,
+        message: failure.error,
+        isError: true,
+      ),
+      (success) => state = state.copyWith(
+        isLoading: false,
+        message: 'OTP Resent Successfully',
+        isError: false,
+      ),
     );
   }
 
   Future<void> loginUser(String email, String password) async {
     state = state.copyWith(isLoading: true, message: null);
-
     final result = await _loginUseCase.loginUser(email, password);
 
-    state = state.copyWith(isLoading: false);
-
     result.fold(
-      (failure) {
-        state = state.copyWith(message: failure.error, isError: true);
-      },
-      (success) {
-        if (success) {
-          state = state.copyWith(message: 'Login Successful', isError: false);
-        } else {
-          state = state.copyWith(
-            message: 'Invalid username or password',
-            isError: true,
-          );
-        }
-      },
+      (failure) => state = state.copyWith(
+        isLoading: false,
+        message: failure.error,
+        isError: true,
+      ),
+      (success) => state = state.copyWith(
+        isLoading: false,
+        message: 'Login Successful',
+        flow: AuthFlow.authenticated,
+        isError: false,
+      ),
     );
   }
 
-  void reset() {
-    state = AuthState.initial();
-  }
+  void reset() => state = AuthState.initial();
 }

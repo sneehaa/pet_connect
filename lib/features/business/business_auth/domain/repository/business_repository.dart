@@ -4,10 +4,9 @@ import 'package:pet_connect/features/business/business_auth/domain/entity/busine
 
 abstract class BusinessRepository {
   Future<Either<Failure, bool>> registerBusiness(BusinessEntity entity);
-
-  Future<Either<Failure, bool>> loginBusiness(String username, String password);
-
+  Future<Either<Failure, bool>> verifyOtp(String email, String otp);
+  Future<Either<Failure, bool>> resendOtp(String email);
+  Future<Either<Failure, bool>> loginBusiness(String email, String password);
   Future<Either<Failure, bool>> uploadDocuments(List<String> filePaths);
-
   Future<Either<Failure, bool>> uploadProfileImage(String imagePath);
 }

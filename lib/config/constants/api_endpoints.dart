@@ -24,7 +24,10 @@ class ApiEndpoints {
       "http://192.168.68.106:5501/api/business/";
   static const String businessLogin = "${businessBaseUrl}login";
   static const String businessRegister = "${businessBaseUrl}register";
-  static const String businessProfileImage = "$businessBaseUrl/business/profile-image";
+  static const String businessVerifyEmail = "${businessBaseUrl}verify-email";
+  static const String businessResendOTP = "${businessBaseUrl}resend-otp";
+  static const String businessProfileImage =
+      "$businessBaseUrl/business/profile-image";
   static const String businessProfile = "${businessBaseUrl}profile";
   static const String businessDocuments = "${businessBaseUrl}upload-documents";
   static const String businessNearby = "${businessBaseUrl}nearby";

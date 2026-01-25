@@ -5,20 +5,22 @@ import 'package:pet_connect/features/business/business_dashboard/domain/entity/p
 
 class PetActionsBottomSheet extends StatelessWidget {
   final PetEntity pet;
-  final VoidCallback onToggleStatus;
+  final Function(String) onUpdateStatus;
   final VoidCallback onViewAdoptionRequests;
   final VoidCallback onDelete;
 
   const PetActionsBottomSheet({
     super.key,
     required this.pet,
-    required this.onToggleStatus,
+    required this.onUpdateStatus,
     required this.onViewAdoptionRequests,
     required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
+    final bool isAvailable = pet.status.toLowerCase() == 'available';
+
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.primaryWhite,
@@ -40,7 +42,6 @@ class PetActionsBottomSheet extends StatelessWidget {
               borderRadius: BorderRadius.circular(2.5),
             ),
           ),
-
           Text(
             'Manage ${pet.name}',
             style: AppStyles.headline3.copyWith(
@@ -50,22 +51,16 @@ class PetActionsBottomSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 30),
-
-          // Action 1: Toggle Status
           _buildActionTile(
-            icon: pet.available ? Icons.check_circle_outline : Icons.public,
-            title: pet.available ? 'Mark as Adopted' : 'Mark as Available',
-            subtitle: pet.available
+            icon: isAvailable ? Icons.check_circle_outline : Icons.public,
+            title: isAvailable ? 'Mark as Adopted' : 'Mark as Available',
+            subtitle: isAvailable
                 ? 'Change status to Adopted'
                 : 'Change status to Available',
-            color: pet.available
-                ? Colors.red.shade600
-                : AppColors.primaryOrange,
-            onTap: onToggleStatus,
+            color: isAvailable ? Colors.red.shade600 : AppColors.primaryOrange,
+            onTap: () => onUpdateStatus(isAvailable ? 'adopted' : 'available'),
           ),
           const SizedBox(height: 16),
-
-          // Action 2: View Requests
           _buildActionTile(
             icon: Icons.assignment_outlined,
             title: 'View Adoption Requests',
@@ -74,8 +69,6 @@ class PetActionsBottomSheet extends StatelessWidget {
             onTap: onViewAdoptionRequests,
           ),
           const SizedBox(height: 16),
-
-          // Action 3: Delete Pet
           _buildActionTile(
             icon: Icons.delete_forever_outlined,
             title: 'Delete Pet Listing',
@@ -83,7 +76,6 @@ class PetActionsBottomSheet extends StatelessWidget {
             color: Colors.red.shade900,
             onTap: onDelete,
           ),
-
           const SizedBox(height: 30),
           _buildCancelButton(context),
         ],
@@ -157,7 +149,7 @@ class PetActionsBottomSheet extends StatelessWidget {
       child: OutlinedButton(
         onPressed: () => Navigator.pop(context),
         style: OutlinedButton.styleFrom(
-          side: BorderSide(color: AppColors.backgroundGrey, width: 2),
+          side: const BorderSide(color: AppColors.backgroundGrey, width: 2),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),

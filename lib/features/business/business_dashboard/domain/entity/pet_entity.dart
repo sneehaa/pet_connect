@@ -6,12 +6,16 @@ class PetEntity extends Equatable {
   final String breed;
   final int age;
   final String gender;
+  final int amount; 
   final bool vaccinated;
   final String? description;
   final String? personality;
   final String? medicalInfo;
   final List<String>? photos;
-  final bool available;
+  final String businessId; 
+  final String status; 
+  final String? adoptedBy; 
+  final DateTime? adoptedAt;
 
   const PetEntity({
     this.id,
@@ -19,12 +23,16 @@ class PetEntity extends Equatable {
     required this.breed,
     required this.age,
     required this.gender,
+    required this.amount,
     this.vaccinated = false,
     this.description,
     this.personality,
     this.medicalInfo,
     this.photos,
-    this.available = true,
+    required this.businessId,
+    this.status = "available",
+    this.adoptedBy,
+    this.adoptedAt,
   });
 
   @override
@@ -34,27 +42,34 @@ class PetEntity extends Equatable {
     breed,
     age,
     gender,
+    amount,
     vaccinated,
     description,
     personality,
     medicalInfo,
     photos,
-    available,
+    businessId,
+    status,
+    adoptedBy,
+    adoptedAt,
   ];
 
-  // Add copyWith method
   PetEntity copyWith({
     String? id,
     String? name,
     String? breed,
     int? age,
     String? gender,
+    int? amount,
     bool? vaccinated,
     String? description,
     String? personality,
     String? medicalInfo,
     List<String>? photos,
-    bool? available,
+    String? businessId,
+    String? status,
+    String? adoptedBy,
+    DateTime? adoptedAt,
   }) {
     return PetEntity(
       id: id ?? this.id,
@@ -62,12 +77,16 @@ class PetEntity extends Equatable {
       breed: breed ?? this.breed,
       age: age ?? this.age,
       gender: gender ?? this.gender,
+      amount: amount ?? this.amount,
       vaccinated: vaccinated ?? this.vaccinated,
       description: description ?? this.description,
       personality: personality ?? this.personality,
       medicalInfo: medicalInfo ?? this.medicalInfo,
       photos: photos ?? this.photos,
-      available: available ?? this.available,
+      businessId: businessId ?? this.businessId,
+      status: status ?? this.status,
+      adoptedBy: adoptedBy ?? this.adoptedBy,
+      adoptedAt: adoptedAt ?? this.adoptedAt,
     );
   }
 }

@@ -21,6 +21,11 @@ class BusinessRemoteRepository implements BusinessRepository {
   }
 
   @override
+  Future<Either<Failure, bool>> verifyOtp(String email, String otp) {
+    return _remoteDataSource.verifyOtp(email, otp);
+  }
+
+  @override
   Future<Either<Failure, bool>> loginBusiness(
     String username,
     String password,
@@ -36,5 +41,10 @@ class BusinessRemoteRepository implements BusinessRepository {
   @override
   Future<Either<Failure, bool>> uploadProfileImage(String imagePath) {
     return _remoteDataSource.uploadProfileImage(imagePath);
+  }
+
+  @override
+  Future<Either<Failure, bool>> resendOtp(String email) {
+    return _remoteDataSource.resendOtp(email);
   }
 }

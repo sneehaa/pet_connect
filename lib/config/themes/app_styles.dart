@@ -51,5 +51,9 @@ class AppStyles {
     fontSize: 18,
     color: AppColors.errorRed,
   );
- 
+
+  static TextStyle inputLabel = GoogleFonts.alice(
+    fontSize: 18,
+    color: AppColors.textLightGrey,
+  );
 }

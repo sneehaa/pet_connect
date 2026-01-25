@@ -56,6 +56,55 @@ class AuthRemoteDataSource {
     }
   }
 
+  Future<Either<Failure, bool>> verifyOtp(String email, String otp) async {
+    try {
+      final response = await dio.post(
+        ApiEndpoints.businessVerifyEmail,
+        data: {"email": email, "otp": otp},
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return const Right(true);
+      } else {
+        return Left(Failure(error: response.data["message"] ?? "Invalid OTP"));
+      }
+    } on DioException catch (e) {
+      return Left(
+        Failure(
+          error: e.response?.data?["message"] ?? "Verification failed",
+          statusCode: e.response?.statusCode.toString(),
+        ),
+      );
+    }
+  }
+
+   Future<Either<Failure, bool>> resendOtp(String email) async {
+    try {
+      final response = await dio.post(
+        ApiEndpoints.businessResendOTP,
+        data: {"email": email},
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return const Right(true);
+      } else {
+        return Left(
+          Failure(
+            error: response.data["message"] ?? "Failed to resend OTP",
+            statusCode: response.statusCode.toString(),
+          ),
+        );
+      }
+    } on DioException catch (e) {
+      return Left(
+        Failure(
+          error: e.response?.data?["message"] ?? "Resend failed",
+          statusCode: e.response?.statusCode.toString() ?? '0',
+        ),
+      );
+    }
+  }
+
   Future<Either<Failure, bool>> loginUser(String email, String password) async {
     try {
       Response response = await dio.post(

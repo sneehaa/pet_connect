@@ -33,9 +33,7 @@ class PetsRemoteDataSource {
 
   Future<void> _validateBusinessAuth() async {
     if (!await _isBusinessAuthenticated()) {
-      throw Exception(
-        'Business authentication required. Please login as business.',
-      );
+      throw Exception('Business authentication required.');
     }
   }
 
@@ -49,13 +47,12 @@ class PetsRemoteDataSource {
 
       final response = await dio.post(
         ApiEndpoints.createPet(),
-        data: _buildPetFormData(pet, photoPaths),
+        data: await _buildPetFormData(pet, photoPaths),
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
             'Accept': 'application/json',
           },
-          contentType: null, 
         ),
       );
 
@@ -63,7 +60,7 @@ class PetsRemoteDataSource {
     } on DioException catch (e) {
       return Left(_mapDioError(e));
     } catch (e) {
-      return Left(Failure(error: 'Authentication error: $e'));
+      return Left(Failure(error: '$e'));
     }
   }
 
@@ -78,13 +75,12 @@ class PetsRemoteDataSource {
 
       final response = await dio.put(
         ApiEndpoints.updatePet(petId),
-        data: _buildPetFormData(pet, photoPaths),
+        data: await _buildPetFormData(pet, photoPaths),
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
             'Accept': 'application/json',
           },
-          contentType: null,
         ),
       );
 
@@ -92,7 +88,7 @@ class PetsRemoteDataSource {
     } on DioException catch (e) {
       return Left(_mapDioError(e));
     } catch (e) {
-      return Left(Failure(error: 'Authentication error: $e'));
+      return Left(Failure(error: '$e'));
     }
   }
 
@@ -132,13 +128,13 @@ class PetsRemoteDataSource {
     } on DioException catch (e) {
       return Left(_mapDioError(e));
     } catch (e) {
-      return Left(Failure(error: 'Authentication error: $e'));
+      return Left(Failure(error: '$e'));
     }
   }
 
   Future<Either<Failure, bool>> updatePetStatus(
     String petId,
-    bool available,
+    String status,
   ) async {
     try {
       await _validateBusinessAuth();
@@ -146,42 +142,51 @@ class PetsRemoteDataSource {
 
       await dio.patch(
         "${ApiEndpoints.petsBaseUrl}$petId/status",
-        data: {'available': available},
+        data: {'status': status},
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
       return const Right(true);
     } on DioException catch (e) {
       return Left(_mapDioError(e));
     } catch (e) {
-      return Left(Failure(error: 'Authentication error: $e'));
+      return Left(Failure(error: '$e'));
     }
   }
 
-  // ---------------- HELPERS ----------------
-
-  FormData _buildPetFormData(PetEntity pet, List<String>? photoPaths) {
-    final formData = FormData.fromMap({
+  Future<FormData> _buildPetFormData(
+    PetEntity pet,
+    List<String>? photoPaths,
+  ) async {
+    final Map<String, dynamic> data = {
       'name': pet.name,
       'breed': pet.breed,
       'age': pet.age,
       'gender': pet.gender,
+      'amount': pet.amount,
       'vaccinated': pet.vaccinated,
-      'available': pet.available,
+      'businessId': pet.businessId,
+      'status': pet.status,
       if (pet.description?.isNotEmpty == true) 'description': pet.description,
       if (pet.personality?.isNotEmpty == true) 'personality': pet.personality,
       if (pet.medicalInfo?.isNotEmpty == true) 'medicalInfo': pet.medicalInfo,
-    });
+      if (pet.adoptedBy != null) 'adoptedBy': pet.adoptedBy,
+    };
+
+    final formData = FormData.fromMap(data);
 
     if (pet.photos != null) {
       for (final url in pet.photos!) {
-        formData.fields.add(MapEntry('existingPhotos[]', url));
+        formData.fields.add(MapEntry('existingPhotos', url));
       }
     }
 
     if (photoPaths != null) {
       for (final path in photoPaths) {
         formData.files.add(
-          MapEntry('photos', MultipartFile.fromFileSync(path)),
+          MapEntry(
+            'photos',
+            await MultipartFile.fromFile(path, filename: path.split('/').last),
+          ),
         );
       }
     }
@@ -194,19 +199,11 @@ class PetsRemoteDataSource {
       if (e.response?.statusCode == 401) {
         return Failure(error: 'Session expired. Please login again.');
       }
-
-      return Failure(
-        error:
-            e.response?.data?['message'] ??
-            'Request failed with status ${e.response?.statusCode}',
-      );
+      return Failure(error: e.response?.data?['message'] ?? 'Request failed.');
     }
-
-    if (e.type == DioExceptionType.connectionTimeout ||
-        e.type == DioExceptionType.receiveTimeout) {
+    if (e.type == DioExceptionType.connectionTimeout) {
       return Failure(error: 'Connection timeout');
     }
-
     return Failure(error: 'No internet connection');
   }
 }

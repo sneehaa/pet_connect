@@ -47,18 +47,15 @@ class PetViewModel extends StateNotifier<PetState> {
     final result = await _useCases.getPets.execute(businessId);
 
     result.fold(
-      (failure) {
-        print('Failed to load pets: ${failure.error}');
-        state = state.copyWith(status: PetStatus.error, message: failure.error);
-      },
-      (pets) {
-        print('Successfully loaded ${pets.length} pets');
-        state = state.copyWith(
-          status: PetStatus.loaded,
-          pets: pets,
-          message: null,
-        );
-      },
+      (failure) => state = state.copyWith(
+        status: PetStatus.error,
+        message: failure.error,
+      ),
+      (pets) => state = state.copyWith(
+        status: PetStatus.loaded,
+        pets: pets,
+        message: null,
+      ),
     );
   }
 
@@ -81,7 +78,6 @@ class PetViewModel extends StateNotifier<PetState> {
     );
   }
 
-  /// Update existing pet
   Future<void> updatePet(
     PetEntity pet,
     List<String>? photoPaths,
@@ -107,7 +103,6 @@ class PetViewModel extends StateNotifier<PetState> {
     );
   }
 
-  /// Delete pet
   Future<void> deletePet(String petId) async {
     state = state.copyWith(status: PetStatus.loading, message: null);
     final result = await _useCases.deletePet.execute(petId);
@@ -130,10 +125,9 @@ class PetViewModel extends StateNotifier<PetState> {
     );
   }
 
-  /// Change availability status
-  Future<void> changeStatus(String petId, bool available) async {
+  Future<void> changeStatus(String petId, String status) async {
     state = state.copyWith(status: PetStatus.loading, message: null);
-    final result = await _useCases.changePetStatus.execute(petId, available);
+    final result = await _useCases.changePetStatus.execute(petId, status);
     result.fold(
       (failure) => state = state.copyWith(
         status: PetStatus.error,
@@ -142,7 +136,7 @@ class PetViewModel extends StateNotifier<PetState> {
       (success) {
         if (success) {
           final updated = state.pets
-              .map((p) => p.id == petId ? p.copyWith(available: available) : p)
+              .map((p) => p.id == petId ? p.copyWith(status: status) : p)
               .toList();
           state = state.copyWith(status: PetStatus.loaded, pets: updated);
         } else {
@@ -155,7 +149,6 @@ class PetViewModel extends StateNotifier<PetState> {
     );
   }
 
-  /// Reset state
   void reset() {
     state = const PetState();
   }

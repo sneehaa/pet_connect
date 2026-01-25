@@ -11,6 +11,8 @@ final businessViewModelProvider =
         ref.read(loginBusinessUseCaseProvider),
         ref.read(uploadDocumentsUseCaseProvider),
         ref.read(uploadProfileImageUseCaseProvider),
+        ref.read(verifyOtpUseCaseProvider),
+        ref.read(resendOtpUseCaseProvider),
       ),
     );
 
@@ -19,37 +21,83 @@ class BusinessViewModel extends StateNotifier<BusinessState> {
   final LoginBusinessUseCase _loginUseCase;
   final UploadDocumentsUseCase _uploadDocsUseCase;
   final UploadProfileImageUseCase _uploadProfileImageUseCase;
+  final VerifyOtpUseCase _verifyOtpUseCase;
+  final ResendOtpUseCase _resendOtpUseCase;
 
   BusinessViewModel(
     this._registerUseCase,
     this._loginUseCase,
     this._uploadDocsUseCase,
     this._uploadProfileImageUseCase,
+    this._verifyOtpUseCase,
+    this._resendOtpUseCase,
   ) : super(BusinessState.initial());
 
-  /// Register
   Future<void> registerBusiness(BusinessEntity entity) async {
     state = state.copyWith(isLoading: true, isError: false, clearMessage: true);
-
     final result = await _registerUseCase.execute(entity);
 
     result.fold(
-      (failure) {
-        state = state.copyWith(
-          isLoading: false,
-          isError: true,
-          message: failure.error,
-        );
-      },
-      (_) {
-        state = state.copyWith(
-          isLoading: false,
-          isError: false,
-          flow: BusinessFlow.registered,
-          message:
-              'Business registered successfully. Please upload documents for verification.',
-        );
-      },
+      (failure) => state = state.copyWith(
+        isLoading: false,
+        isError: true,
+        message: failure.error,
+      ),
+      (_) => state = state.copyWith(
+        isLoading: false,
+        isError: false,
+        email: entity.email,
+        flow: BusinessFlow.needsOtp,
+        message: 'OTP sent to ${entity.email}',
+      ),
+    );
+  }
+
+  Future<void> verifyOtp(String otp) async {
+    if (state.email == null) return;
+
+    state = state.copyWith(isLoading: true, isError: false);
+    final result = await _verifyOtpUseCase.execute(state.email!, otp);
+
+    result.fold(
+      (failure) => state = state.copyWith(
+        isLoading: false,
+        isError: true,
+        message: failure.error,
+      ),
+      (_) => state = state.copyWith(
+        isLoading: false,
+        isError: false,
+        flow: BusinessFlow.otpVerified,
+        message: "Email verified! You can now upload your business documents.",
+      ),
+    );
+  }
+
+  Future<void> resendOtp() async {
+    if (state.email == null) {
+      state = state.copyWith(
+        isError: true,
+        message: "Email not found. Please register again.",
+      );
+      return;
+    }
+
+    state = state.copyWith(isLoading: true, isError: false, clearMessage: true);
+
+    final result = await _resendOtpUseCase.execute(state.email!);
+
+    result.fold(
+      (failure) => state = state.copyWith(
+        isLoading: false,
+        isError: true,
+        message: failure.error,
+      ),
+      (_) => state = state.copyWith(
+        isLoading: false,
+        isError: false,
+        message: "A new verification code has been sent to ${state.email}",
+      ),
     );
   }
 

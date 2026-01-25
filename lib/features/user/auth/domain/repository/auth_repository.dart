@@ -12,4 +12,6 @@ final authRepositoryProvider = Provider(
 abstract class AuthRepository {
   Future<Either<Failure, bool>> registerUser(AuthEntity user);
   Future<Either<Failure, bool>> loginUser(String email, String password);
+   Future<Either<Failure, bool>> verifyOtp(String email, String otp);
+  Future<Either<Failure, bool>> resendOtp(String email);
 }

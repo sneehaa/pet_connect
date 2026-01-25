@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:pet_connect/config/themes/app_colors.dart';
 import 'package:pet_connect/config/themes/app_styles.dart';
 import 'package:pet_connect/core/utils/snackbar_utils.dart';
@@ -8,6 +8,11 @@ import 'package:pet_connect/features/user/auth/presentation/auth_viewmodel/auth_
 import 'package:pet_connect/features/user/auth/presentation/state/auth_state.dart';
 import 'package:pet_connect/features/user/auth/presentation/view/register_view.dart';
 import 'package:pet_connect/features/user/home/homescreen.dart';
+
+// Local provider for password visibility
+final loginPasswordVisibleProvider = StateProvider.autoDispose<bool>(
+  (ref) => true,
+);
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -22,27 +27,36 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
 
   @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final obscurePassword = ref.watch(loginPasswordVisibleProvider);
+    final state = ref.watch(authViewModelProvider);
+
     ref.listen<AuthState>(authViewModelProvider, (previous, next) {
-      if (next.message != null) {
+      if (next.message != null && previous?.message != next.message) {
         showSnackBar(
           context: context,
           message: next.message!,
           isSuccess: !next.isError,
         );
 
-        if (!next.isError && next.message == 'Login Successful') {
-          Future.delayed(const Duration(seconds: 2), () {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const Homescreen()),
-            );
+        if (!next.isError && next.flow == AuthFlow.authenticated) {
+          Future.delayed(const Duration(seconds: 1), () {
+            if (mounted) {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (_) => const Homescreen()),
+              );
+            }
           });
         }
-        ref.read(authViewModelProvider.notifier).reset();
       }
     });
-
-    final state = ref.watch(authViewModelProvider);
 
     return Scaffold(
       backgroundColor: AppColors.primaryWhite,
@@ -76,105 +90,78 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         key: _formKey,
                         child: Column(
                           children: [
-                            // Email field
+                            // Email Field
                             TextFormField(
                               controller: _emailController,
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: AppColors.backgroundGrey.withOpacity(
-                                  0.45,
-                                ),
-                                labelText: 'Email',
-                                labelStyle: GoogleFonts.alice(
-                                  fontSize: 18,
-                                  color: AppColors.textLightGrey,
-                                ),
-                                prefixIcon: Padding(
-                                  padding: const EdgeInsets.all(12.0),
-                                  child: Image.asset(
-                                    'assets/icons/email.png',
-                                    width: 24,
-                                    height: 24,
-                                  ),
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 18,
-                                ),
+                              keyboardType: TextInputType.emailAddress,
+                              decoration: _inputDecoration(
+                                label: 'Email',
+                                iconPath: 'assets/icons/email.png',
                               ),
                               validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your email';
-                                }
-                                if (!value.contains('@')) {
-                                  return 'Please enter a valid email';
-                                }
+                                if (value == null || value.isEmpty)
+                                  return 'Please enter email';
+                                if (!value.contains('@'))
+                                  return 'Invalid email format';
                                 return null;
                               },
                             ),
                             const SizedBox(height: 20),
 
-                            // Password field
+                            // Password Field with Toggle
                             TextFormField(
                               controller: _passwordController,
-                              obscureText: true,
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: AppColors.backgroundGrey.withOpacity(
-                                  0.45,
-                                ),
-                                labelText: 'Password',
-                                labelStyle: GoogleFonts.alice(
-                                  fontSize: 18,
-                                  color: AppColors.textLightGrey,
-                                ),
-                                prefixIcon: Padding(
-                                  padding: const EdgeInsets.all(12.0),
-                                  child: Image.asset(
-                                    'assets/icons/password.png',
-                                    width: 24,
-                                    height: 24,
+                              obscureText: obscurePassword,
+                              decoration:
+                                  _inputDecoration(
+                                    label: 'Password',
+                                    iconPath: 'assets/icons/password.png',
+                                  ).copyWith(
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        obscurePassword
+                                            ? Icons.visibility_off
+                                            : Icons.visibility,
+                                        color: AppColors.textLightGrey,
+                                      ),
+                                      onPressed: () =>
+                                          ref
+                                                  .read(
+                                                    loginPasswordVisibleProvider
+                                                        .notifier,
+                                                  )
+                                                  .state =
+                                              !obscurePassword,
+                                    ),
                                   ),
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 18,
-                                ),
-                              ),
                               validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your password';
-                                }
-                                if (value.length < 6) {
-                                  return 'Password must be at least 6 characters';
-                                }
+                                if (value == null || value.isEmpty)
+                                  return 'Please enter password';
                                 return null;
                               },
                             ),
                             const SizedBox(height: 10),
                             Align(
                               alignment: Alignment.centerRight,
-                              child: Text(
-                                'Forgot password?',
-                                style: GoogleFonts.alice(
-                                  fontSize: 16,
-                                  color: AppColors.errorRed,
+                              child: GestureDetector(
+                                onTap: () {
+                                  /* Handle forgot password */
+                                },
+                                child: Text(
+                                  'Forgot password?',
+                                  style: AppStyles.linkText.copyWith(
+                                    fontSize: 16,
+                                  ),
                                 ),
                               ),
                             ),
                             const SizedBox(height: 50),
 
-                            // Login Button or Loader
+                            // Login Button
                             state.isLoading
-                                ? const CircularProgressIndicator()
+                                ? const CircularProgressIndicator(
+                                    color: AppColors.primaryOrange,
+                                  )
                                 : ElevatedButton(
                                     onPressed: () {
                                       if (_formKey.currentState!.validate()) {
@@ -190,47 +177,43 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: AppColors.primaryOrange,
-                                      minimumSize: const Size(230, 40),
+                                      minimumSize: const Size(230, 50),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                     ),
                                     child: Text(
                                       "Login",
-                                      style: GoogleFonts.alice(
+                                      style: AppStyles.button.copyWith(
                                         fontSize: 25,
-                                        color: AppColors.primaryWhite,
                                       ),
                                     ),
                                   ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 20),
 
-                            // Signup link
+                            // Signup Link
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  "Don't have an account?",
-                                  style: GoogleFonts.alice(
+                                  "Don't have an account? ",
+                                  style: AppStyles.small.copyWith(
                                     fontSize: 16,
                                     color: AppColors.textDarkGrey,
                                   ),
                                 ),
-                                const SizedBox(width: 2),
                                 GestureDetector(
                                   onTap: () => Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) =>
-                                          const SignupScreen(),
+                                      builder: (_) => const SignupScreen(),
                                     ),
                                   ),
                                   child: Text(
                                     "Signup!",
-                                    style: GoogleFonts.alice(
+                                    style: AppStyles.linkText.copyWith(
+                                      fontWeight: FontWeight.bold,
                                       fontSize: 16,
-                                      color: AppColors.errorRed,
-                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                 ),
@@ -248,6 +231,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  InputDecoration _inputDecoration({
+    required String label,
+    required String iconPath,
+  }) {
+    return InputDecoration(
+      filled: true,
+      fillColor: AppColors.backgroundGrey.withOpacity(0.45),
+      labelText: label,
+      labelStyle: AppStyles.subtitle.copyWith(fontSize: 18),
+      prefixIcon: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Image.asset(iconPath, width: 24, height: 24),
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
     );
   }
 }

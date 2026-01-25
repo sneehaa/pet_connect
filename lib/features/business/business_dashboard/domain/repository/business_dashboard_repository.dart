@@ -16,7 +16,7 @@ abstract class BusinessDashboardRepository {
     String petId,
   );
   Future<Either<Failure, bool>> deletePet(String petId);
-  Future<Either<Failure, bool>> changePetStatus(String petId, bool available);
+  Future<Either<Failure, bool>> changePetStatus(String petId, String status);
   Future<Either<Failure, AdoptionEntity>> applyAdoption(
     String petId,
     String message,

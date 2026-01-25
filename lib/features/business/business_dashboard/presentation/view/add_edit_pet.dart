@@ -13,7 +13,8 @@ import 'package:pet_connect/features/business/business_dashboard/presentation/vi
 
 class AddEditPetScreen extends ConsumerStatefulWidget {
   final PetEntity? pet;
-  const AddEditPetScreen({super.key, this.pet});
+  final String businessId;
+  const AddEditPetScreen({super.key, this.pet, required this.businessId});
 
   @override
   ConsumerState<AddEditPetScreen> createState() => _AddEditPetScreenState();
@@ -24,13 +25,14 @@ class _AddEditPetScreenState extends ConsumerState<AddEditPetScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _breedController = TextEditingController();
   final TextEditingController _ageController = TextEditingController();
+  final TextEditingController _amountController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _personalityController = TextEditingController();
   final TextEditingController _medicalController = TextEditingController();
 
   String? _selectedGender;
   bool _isVaccinated = false;
-  bool _isAvailable = true;
+  String _currentStatus = 'available';
 
   List<String> _existingPhotos = [];
   final List<File> _newPhotos = [];
@@ -44,9 +46,10 @@ class _AddEditPetScreenState extends ConsumerState<AddEditPetScreen> {
       _nameController.text = widget.pet!.name;
       _breedController.text = widget.pet!.breed;
       _ageController.text = widget.pet!.age.toString();
+      _amountController.text = widget.pet!.amount.toString();
       _selectedGender = widget.pet!.gender;
       _isVaccinated = widget.pet!.vaccinated;
-      _isAvailable = widget.pet!.available;
+      _currentStatus = widget.pet!.status;
       _descriptionController.text = widget.pet!.description ?? '';
       _personalityController.text = widget.pet!.personality ?? '';
       _medicalController.text = widget.pet!.medicalInfo ?? '';
@@ -59,6 +62,7 @@ class _AddEditPetScreenState extends ConsumerState<AddEditPetScreen> {
     _nameController.dispose();
     _breedController.dispose();
     _ageController.dispose();
+    _amountController.dispose();
     _descriptionController.dispose();
     _personalityController.dispose();
     _medicalController.dispose();
@@ -67,28 +71,28 @@ class _AddEditPetScreenState extends ConsumerState<AddEditPetScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(petViewModelProvider);
     ref.listen<PetState>(petViewModelProvider, (previous, next) {
-      if (next.message != null && next.message != previous?.message) {
-        showSnackBar(
-          context: context,
-          message: next.message!,
-          isSuccess:
-              !next.message!.contains('Failed') &&
-              !next.message!.contains('error'),
-        );
+      if (previous?.status == PetStatus.loading &&
+          next.status != PetStatus.loading) {
+        if (next.message != null && next.message!.isNotEmpty) {
+          showSnackBar(
+            context: context,
+            message: next.message!,
+            isSuccess: next.status != PetStatus.error,
+          );
 
-        if (next.message!.contains('successfully')) {
-          Future.delayed(const Duration(seconds: 1), () {
-            Navigator.pop(context);
-          });
+          if (next.status == PetStatus.loaded &&
+              next.message!.contains('successfully')) {
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (mounted) Navigator.pop(context);
+            });
+          }
+          ref.read(petViewModelProvider.notifier).clearMessage();
         }
-
-        // Clear the message after showing
-        ref.read(petViewModelProvider.notifier).clearMessage();
       }
     });
 
-    final state = ref.watch(petViewModelProvider);
     return Scaffold(
       backgroundColor: AppColors.primaryWhite,
       body: SafeArea(
@@ -191,6 +195,16 @@ class _AddEditPetScreenState extends ConsumerState<AddEditPetScreen> {
                           Expanded(child: _buildGenderDropdown()),
                         ],
                       ),
+                      const SizedBox(height: 20),
+                      _buildTextField(
+                        controller: _amountController,
+                        label: 'Adoption Fee (Rs.)',
+                        hintText: '0 for free, or enter amount',
+                        icon: Icons.payments_outlined,
+                        keyboardType: TextInputType.number,
+                        validator: (v) =>
+                            v!.isEmpty ? 'Enter adoption fee' : null,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 35),
@@ -225,11 +239,12 @@ class _AddEditPetScreenState extends ConsumerState<AddEditPetScreen> {
                       ),
                       _buildToggleSwitch(
                         title: 'Available for Adoption',
-                        value: _isAvailable,
+                        value: _currentStatus == 'available',
                         onChanged: (value) {
-                          setState(() {
-                            _isAvailable = value;
-                          });
+                          setState(
+                            () =>
+                                _currentStatus = value ? 'available' : 'booked',
+                          );
                         },
                       ),
                     ],
@@ -689,28 +704,22 @@ class _AddEditPetScreenState extends ConsumerState<AddEditPetScreen> {
 
   void _savePet() async {
     if (_formKey.currentState!.validate() && _selectedGender != null) {
-      // Convert File objects to file paths for new photos
       final newPhotoPaths = _newPhotos.map((file) => file.path).toList();
 
-      // Create PetEntity with existing photos only (URLs from Cloudinary)
       final pet = PetEntity(
         id: widget.pet?.id,
+        businessId: widget.businessId,
         name: _nameController.text.trim(),
         breed: _breedController.text.trim(),
         age: int.parse(_ageController.text.trim()),
+        amount: int.parse(_amountController.text.trim()),
         gender: _selectedGender!,
         vaccinated: _isVaccinated,
-        description: _descriptionController.text.trim().isEmpty
-            ? null
-            : _descriptionController.text.trim(),
-        personality: _personalityController.text.trim().isEmpty
-            ? null
-            : _personalityController.text.trim(),
-        medicalInfo: _medicalController.text.trim().isEmpty
-            ? null
-            : _medicalController.text.trim(),
-        photos: _existingPhotos, // Only existing Cloudinary URLs
-        available: _isAvailable,
+        status: _currentStatus,
+        description: _descriptionController.text.trim(),
+        personality: _personalityController.text.trim(),
+        medicalInfo: _medicalController.text.trim(),
+        photos: _existingPhotos,
       );
       if (widget.pet == null) {
         await ref

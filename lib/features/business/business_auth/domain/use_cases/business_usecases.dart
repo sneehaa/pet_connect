@@ -21,6 +21,32 @@ class RegisterBusinessUseCase {
   }
 }
 
+final verifyOtpUseCaseProvider = Provider.autoDispose<VerifyOtpUseCase>(
+  (ref) => VerifyOtpUseCase(ref.read(businessRemoteRepositoryProvider)),
+);
+
+class VerifyOtpUseCase {
+  final BusinessRepository repository;
+  VerifyOtpUseCase(this.repository);
+
+  Future<Either<Failure, bool>> execute(String email, String otp) async {
+    return await repository.verifyOtp(email, otp);
+  }
+}
+
+final resendOtpUseCaseProvider = Provider.autoDispose<ResendOtpUseCase>(
+  (ref) => ResendOtpUseCase(ref.read(businessRemoteRepositoryProvider)),
+);
+
+class ResendOtpUseCase {
+  final BusinessRepository repository;
+  ResendOtpUseCase(this.repository);
+
+  Future<Either<Failure, bool>> execute(String email) async {
+    return await repository.resendOtp(email);
+  }
+}
+
 /// Login Business UseCase
 final loginBusinessUseCaseProvider = Provider.autoDispose<LoginBusinessUseCase>(
   (ref) => LoginBusinessUseCase(ref.read(businessRemoteRepositoryProvider)),

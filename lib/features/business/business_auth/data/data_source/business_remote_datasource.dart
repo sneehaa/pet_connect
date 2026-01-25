@@ -23,17 +23,14 @@ class BusinessRemoteDataSource {
 
   BusinessRemoteDataSource(this.dio, this.secureStorage);
 
-  /// Register a new business
+
   Future<Either<Failure, bool>> registerBusiness(
     BusinessEntity business,
   ) async {
     try {
       final apiModel = BusinessApiModel.fromEntity(business);
 
-      // Create FormData for multipart request
       final formData = FormData();
-
-      // Add text fields
       formData.fields.addAll([
         MapEntry('businessName', apiModel.businessName),
         MapEntry('username', apiModel.username),
@@ -42,7 +39,6 @@ class BusinessRemoteDataSource {
         MapEntry('phoneNumber', apiModel.phoneNumber),
       ]);
 
-      // Add optional fields if they exist
       if (apiModel.address != null && apiModel.address!.isNotEmpty) {
         formData.fields.add(MapEntry('address', apiModel.address!));
       }
@@ -54,7 +50,6 @@ class BusinessRemoteDataSource {
         );
       }
 
-      // Add profile image if provided
       if (business.profileImagePath != null &&
           business.profileImagePath!.isNotEmpty) {
         formData.files.add(
@@ -100,6 +95,28 @@ class BusinessRemoteDataSource {
               e.message ??
               "Registration failed",
           statusCode: e.response?.statusCode.toString() ?? '0',
+        ),
+      );
+    }
+  }
+
+  Future<Either<Failure, bool>> verifyOtp(String email, String otp) async {
+    try {
+      final response = await dio.post(
+        ApiEndpoints.businessVerifyEmail,
+        data: {"email": email, "otp": otp},
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return const Right(true);
+      } else {
+        return Left(Failure(error: response.data["message"] ?? "Invalid OTP"));
+      }
+    } on DioException catch (e) {
+      return Left(
+        Failure(
+          error: e.response?.data?["message"] ?? "Verification failed",
+          statusCode: e.response?.statusCode.toString(),
         ),
       );
     }
@@ -319,23 +336,20 @@ class BusinessRemoteDataSource {
     }
   }
 
-  /// Get nearby businesses
-  Future<Either<Failure, List<dynamic>>> getNearby(
-    double latitude,
-    double longitude,
-  ) async {
+
+  Future<Either<Failure, bool>> resendOtp(String email) async {
     try {
-      final response = await dio.get(
-        ApiEndpoints.businessNearby,
-        queryParameters: {"latitude": latitude, "longitude": longitude},
+      final response = await dio.post(
+        ApiEndpoints.businessResendOTP,
+        data: {"email": email},
       );
 
-      if (response.statusCode == 200) {
-        return Right(response.data['businesses'] as List<dynamic>);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return const Right(true);
       } else {
         return Left(
           Failure(
-            error: response.data['message'] ?? "Unknown error",
+            error: response.data["message"] ?? "Failed to resend OTP",
             statusCode: response.statusCode.toString(),
           ),
         );
@@ -343,7 +357,7 @@ class BusinessRemoteDataSource {
     } on DioException catch (e) {
       return Left(
         Failure(
-          error: e.error.toString(),
+          error: e.response?.data?["message"] ?? "Resend failed",
           statusCode: e.response?.statusCode.toString() ?? '0',
         ),
       );

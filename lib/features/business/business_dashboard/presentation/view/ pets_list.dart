@@ -8,10 +8,10 @@ import 'package:pet_connect/features/business/business_dashboard/domain/entity/p
 import 'package:pet_connect/features/business/business_dashboard/presentation/state/pet_state.dart';
 import 'package:pet_connect/features/business/business_dashboard/presentation/view/add_edit_pet.dart';
 import 'package:pet_connect/features/business/business_dashboard/presentation/view/adoption_requests_list.dart';
-import 'package:pet_connect/features/business/business_dashboard/presentation/viewmodel/pet_view_model.dart';
 import 'package:pet_connect/features/business/business_dashboard/presentation/view/pet_widgets/delete_confirmatrion_dialogue.dart';
 import 'package:pet_connect/features/business/business_dashboard/presentation/view/pet_widgets/pet_actions_bottom_sheet.dart';
 import 'package:pet_connect/features/business/business_dashboard/presentation/view/pet_widgets/pet_card.dart';
+import 'package:pet_connect/features/business/business_dashboard/presentation/viewmodel/pet_view_model.dart';
 
 class PetListScreen extends ConsumerStatefulWidget {
   const PetListScreen({super.key});
@@ -48,17 +48,29 @@ class _PetListScreenState extends ConsumerState<PetListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Show loading while getting business ID
+    ref.listen<PetState>(petViewModelProvider, (previous, next) {
+      if (previous?.status == PetStatus.loading &&
+          next.status != PetStatus.loading) {
+        if (next.message != null && next.message!.isNotEmpty) {
+          showSnackBar(
+            context: context,
+            message: next.message!,
+            isSuccess: next.status != PetStatus.error,
+          );
+
+          ref.read(petViewModelProvider.notifier).clearMessage();
+        }
+      }
+    });
+
     if (_isLoadingBusinessId) {
       return _buildLoadingScreen();
     }
 
-    // Show error if no business ID found
     if (_businessId == null) {
       return _buildBusinessErrorScreen();
     }
 
-    // Now we have businessId, show the pet list
     return _buildPetListContent();
   }
 
@@ -112,7 +124,7 @@ class _PetListScreenState extends ConsumerState<PetListScreen> {
                   color: AppColors.primaryOrange.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.business_outlined,
                   size: 50,
                   color: AppColors.primaryOrange,
@@ -169,25 +181,6 @@ class _PetListScreenState extends ConsumerState<PetListScreen> {
   Widget _buildPetListContent() {
     final state = ref.watch(petViewModelProvider);
 
-    // Handle snackbar messages
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (state.message != null && state.message!.isNotEmpty) {
-        showSnackBar(
-          context: context,
-          message: state.message!,
-          isSuccess: state.status != PetStatus.error,
-        );
-        // Clear message after showing
-        Future.delayed(const Duration(milliseconds: 100), () {
-          if (mounted) {
-            ref.read(petViewModelProvider.notifier).state = state.copyWith(
-              message: null,
-            );
-          }
-        });
-      }
-    });
-
     return Scaffold(
       backgroundColor: AppColors.background,
       body: state.status == PetStatus.loading
@@ -203,7 +196,8 @@ class _PetListScreenState extends ConsumerState<PetListScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const AddEditPetScreen(),
+                    builder: (context) =>
+                        AddEditPetScreen(businessId: _businessId!),
                   ),
                 );
               },
@@ -262,7 +256,11 @@ class _PetListScreenState extends ConsumerState<PetListScreen> {
                 color: Colors.red.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.error_outline, color: Colors.red, size: 50),
+              child: const Icon(
+                Icons.error_outline,
+                color: Colors.red,
+                size: 50,
+              ),
             ),
             const SizedBox(height: 24),
             Text(
@@ -324,7 +322,7 @@ class _PetListScreenState extends ConsumerState<PetListScreen> {
             color: AppColors.primaryOrange.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(
+          child: const Icon(
             Icons.pets_outlined,
             color: AppColors.primaryOrange,
             size: 70,
@@ -360,7 +358,8 @@ class _PetListScreenState extends ConsumerState<PetListScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const AddEditPetScreen(),
+                  builder: (context) =>
+                      AddEditPetScreen(businessId: _businessId!),
                 ),
               );
             },
@@ -406,7 +405,7 @@ class _PetListScreenState extends ConsumerState<PetListScreen> {
                   pet: pet,
                   onEdit: () => _navigateToEditPet(pet),
                   onManage: () => _showPetActionsDialog(pet, context),
-                  onDelete: () {},
+                  onDelete: () => _showDeleteConfirmationDialog(pet, context),
                 );
               },
             ),
@@ -425,11 +424,11 @@ class _PetListScreenState extends ConsumerState<PetListScreen> {
       builder: (context) {
         return PetActionsBottomSheet(
           pet: pet,
-          onToggleStatus: () {
+          onUpdateStatus: (newStatus) {
             Navigator.pop(context);
             ref
                 .read(petViewModelProvider.notifier)
-                .changeStatus(pet.id!, !pet.available);
+                .changeStatus(pet.id!, newStatus);
           },
           onViewAdoptionRequests: () {
             Navigator.pop(context);
@@ -466,7 +465,10 @@ class _PetListScreenState extends ConsumerState<PetListScreen> {
   void _navigateToEditPet(PetEntity pet) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => AddEditPetScreen(pet: pet)),
+      MaterialPageRoute(
+        builder: (context) =>
+            AddEditPetScreen(pet: pet, businessId: _businessId!),
+      ),
     );
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:pet_connect/config/themes/app_colors.dart';
 import 'package:pet_connect/config/themes/app_styles.dart';
 import 'package:pet_connect/core/utils/snackbar_utils.dart';
@@ -9,6 +9,11 @@ import 'package:pet_connect/features/business/business_auth/presentation/state/a
 import 'package:pet_connect/features/business/business_auth/presentation/view/register_view.dart';
 import 'package:pet_connect/features/business/business_auth/presentation/view/upload_document.dart';
 import 'package:pet_connect/features/business/business_dashboard/presentation/view/business_dashboard.dart';
+
+// Local provider for password visibility toggle
+final businessLoginPasswordVisibleProvider = StateProvider.autoDispose<bool>(
+  (ref) => true,
+);
 
 class BusinessLoginScreen extends ConsumerStatefulWidget {
   const BusinessLoginScreen({super.key});
@@ -32,27 +37,26 @@ class _BusinessLoginScreenState extends ConsumerState<BusinessLoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final obscurePassword = ref.watch(businessLoginPasswordVisibleProvider);
+    final state = ref.watch(businessViewModelProvider);
+
     ref.listen<BusinessState>(businessViewModelProvider, (previous, next) {
-      if (next.message != null) {
+      if (next.message != null && previous?.message != next.message) {
         showSnackBar(
           context: context,
           message: next.message!,
           isSuccess: !next.isError,
         );
 
-        // Handle different error cases
         if (next.isError) {
-          // Check if business needs to upload documents
           if (next.message!.toLowerCase().contains('not approved') ||
               next.message!.toLowerCase().contains('pending')) {
             Future.delayed(const Duration(seconds: 2), () {
-              if (mounted) {
-                _showDocumentUploadDialog();
-              }
+              if (mounted) _showDocumentUploadDialog();
             });
           }
-        } else if (next.message == 'Login successful') {
-          // Successful login - navigate to home
+        } else if (next.flow == BusinessFlow.loggedIn ||
+            next.message == 'Login successful') {
           Future.delayed(const Duration(seconds: 1), () {
             if (mounted) {
               Navigator.of(context).pushReplacement(
@@ -63,15 +67,8 @@ class _BusinessLoginScreenState extends ConsumerState<BusinessLoginScreen> {
             }
           });
         }
-
-        // Reset state after handling
-        Future.delayed(const Duration(milliseconds: 500), () {
-          ref.read(businessViewModelProvider.notifier).reset();
-        });
       }
     });
-
-    final state = ref.watch(businessViewModelProvider);
 
     return Scaffold(
       backgroundColor: AppColors.primaryWhite,
@@ -105,102 +102,57 @@ class _BusinessLoginScreenState extends ConsumerState<BusinessLoginScreen> {
                         key: _formKey,
                         child: Column(
                           children: [
-                            // Email field
-                            TextFormField(
+                            _buildTextField(
                               controller: _emailController,
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: AppColors.backgroundGrey.withOpacity(
-                                  0.45,
-                                ),
-                                labelText: 'Email',
-                                labelStyle: GoogleFonts.alice(
-                                  fontSize: 18,
-                                  color: AppColors.textLightGrey,
-                                ),
-                                prefixIcon: Padding(
-                                  padding: const EdgeInsets.all(12.0),
-                                  child: Image.asset(
-                                    'assets/icons/email.png',
-                                    width: 24,
-                                    height: 24,
-                                  ),
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 18,
-                                ),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your username or email';
-                                }
-                                return null;
-                              },
+                              label: 'Email',
+                              iconPath: 'assets/icons/email.png',
+                              validator: (v) =>
+                                  v!.isEmpty ? 'Enter email/username' : null,
                             ),
                             const SizedBox(height: 20),
-
-                            // Password field
                             TextFormField(
                               controller: _passwordController,
-                              obscureText: true,
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: AppColors.backgroundGrey.withOpacity(
-                                  0.45,
-                                ),
-                                labelText: 'Password',
-                                labelStyle: GoogleFonts.alice(
-                                  fontSize: 18,
-                                  color: AppColors.textLightGrey,
-                                ),
-                                prefixIcon: Padding(
-                                  padding: const EdgeInsets.all(12.0),
-                                  child: Image.asset(
-                                    'assets/icons/password.png',
-                                    width: 24,
-                                    height: 24,
+                              obscureText: obscurePassword,
+                              decoration:
+                                  _inputDecoration(
+                                    label: 'Password',
+                                    iconPath: 'assets/icons/password.png',
+                                  ).copyWith(
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        obscurePassword
+                                            ? Icons.visibility_off
+                                            : Icons.visibility,
+                                        color: AppColors.textLightGrey,
+                                      ),
+                                      onPressed: () =>
+                                          ref
+                                                  .read(
+                                                    businessLoginPasswordVisibleProvider
+                                                        .notifier,
+                                                  )
+                                                  .state =
+                                              !obscurePassword,
+                                    ),
                                   ),
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 18,
-                                ),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your password';
-                                }
-                                if (value.length < 6) {
-                                  return 'Password must be at least 6 characters';
-                                }
-                                return null;
-                              },
+                              validator: (v) =>
+                                  v!.length < 6 ? 'Min 6 characters' : null,
                             ),
                             const SizedBox(height: 10),
                             Align(
                               alignment: Alignment.centerRight,
                               child: Text(
                                 'Forgot password?',
-                                style: GoogleFonts.alice(
+                                style: AppStyles.linkText.copyWith(
                                   fontSize: 16,
-                                  color: AppColors.errorRed,
                                 ),
                               ),
                             ),
                             const SizedBox(height: 50),
-
-                            // Login Button or Loader
                             state.isLoading
-                                ? const CircularProgressIndicator()
+                                ? const CircularProgressIndicator(
+                                    color: AppColors.primaryOrange,
+                                  )
                                 : ElevatedButton(
                                     onPressed: () {
                                       if (_formKey.currentState!.validate()) {
@@ -217,80 +169,66 @@ class _BusinessLoginScreenState extends ConsumerState<BusinessLoginScreen> {
                                     },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: AppColors.primaryOrange,
-                                      minimumSize: const Size(230, 40),
+                                      minimumSize: const Size(230, 50),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                     ),
                                     child: Text(
                                       "Login",
-                                      style: GoogleFonts.alice(
+                                      style: AppStyles.button.copyWith(
                                         fontSize: 25,
-                                        color: AppColors.primaryWhite,
                                       ),
                                     ),
                                   ),
-                            const SizedBox(height: 10),
-
-                            // Signup link
+                            const SizedBox(height: 20),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  "Don't have an account?",
-                                  style: GoogleFonts.alice(
-                                    fontSize: 16,
-                                    color: AppColors.textDarkGrey,
-                                  ),
+                                  "Don't have an account? ",
+                                  style: AppStyles.small.copyWith(fontSize: 16),
                                 ),
-                                const SizedBox(width: 2),
                                 GestureDetector(
                                   onTap: () => Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) =>
+                                      builder: (_) =>
                                           const BusinessSignupScreen(),
                                     ),
                                   ),
                                   child: Text(
                                     "Signup!",
-                                    style: GoogleFonts.alice(
+                                    style: AppStyles.linkText.copyWith(
+                                      fontWeight: FontWeight.bold,
                                       fontSize: 16,
-                                      color: AppColors.errorRed,
-                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 20),
-
-                            // Pending verification helper
                             TextButton.icon(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const UploadBusinessDocument(),
-                                  ),
-                                );
-                              },
-                              icon: Icon(
+                              onPressed: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      const UploadBusinessDocument(),
+                                ),
+                              ),
+                              icon: const Icon(
                                 Icons.upload_file,
                                 color: AppColors.primaryOrange,
                                 size: 20,
                               ),
                               label: Text(
                                 'Upload Documents',
-                                style: GoogleFonts.alice(
-                                  fontSize: 14,
+                                style: AppStyles.button.copyWith(
                                   color: AppColors.primaryOrange,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
                                 ),
                               ),
                             ),
-
                             const SizedBox(height: 30),
                           ],
                         ),
@@ -306,6 +244,40 @@ class _BusinessLoginScreenState extends ConsumerState<BusinessLoginScreen> {
     );
   }
 
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String iconPath,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      decoration: _inputDecoration(label: label, iconPath: iconPath),
+      validator: validator,
+    );
+  }
+
+  InputDecoration _inputDecoration({
+    required String label,
+    required String iconPath,
+  }) {
+    return InputDecoration(
+      filled: true,
+      fillColor: AppColors.backgroundGrey.withOpacity(0.45),
+      labelText: label,
+      labelStyle: AppStyles.subtitle.copyWith(fontSize: 18),
+      prefixIcon: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Image.asset(iconPath, width: 24, height: 24),
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+    );
+  }
+
   void _showDocumentUploadDialog() {
     showDialog(
       context: context,
@@ -317,17 +289,14 @@ class _BusinessLoginScreenState extends ConsumerState<BusinessLoginScreen> {
           ),
           title: Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.info_outline,
                 color: AppColors.primaryOrange,
                 size: 28,
               ),
               const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'Documents Required',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
+              Expanded(
+                child: Text('Documents Required', style: AppStyles.headline3),
               ),
             ],
           ),
@@ -337,7 +306,7 @@ class _BusinessLoginScreenState extends ConsumerState<BusinessLoginScreen> {
             children: [
               Text(
                 'Your business registration is pending. You need to upload verification documents before you can login.',
-                style: GoogleFonts.alice(fontSize: 16, height: 1.5),
+                style: AppStyles.body,
               ),
               const SizedBox(height: 16),
               Container(
@@ -351,9 +320,8 @@ class _BusinessLoginScreenState extends ConsumerState<BusinessLoginScreen> {
                   children: [
                     Text(
                       'Required Documents:',
-                      style: GoogleFonts.alice(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                      style: AppStyles.body.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -367,15 +335,10 @@ class _BusinessLoginScreenState extends ConsumerState<BusinessLoginScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
               child: Text(
                 'Later',
-                style: GoogleFonts.alice(
-                  color: Colors.grey,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: AppStyles.small.copyWith(fontSize: 16),
               ),
             ),
             ElevatedButton(
@@ -384,22 +347,16 @@ class _BusinessLoginScreenState extends ConsumerState<BusinessLoginScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const UploadBusinessDocument(),
+                    builder: (_) => const UploadBusinessDocument(),
                   ),
                 );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryOrange,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
               ),
               child: Text(
                 'Upload Now',
-                style: GoogleFonts.alice(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: AppStyles.button.copyWith(fontSize: 14),
               ),
             ),
           ],
@@ -413,13 +370,18 @@ class _BusinessLoginScreenState extends ConsumerState<BusinessLoginScreen> {
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
         children: [
-          Icon(
+          const Icon(
             Icons.check_circle_outline,
             size: 16,
             color: AppColors.primaryOrange,
           ),
           const SizedBox(width: 8),
-          Expanded(child: Text(text, style: GoogleFonts.alice(fontSize: 13))),
+          Expanded(
+            child: Text(
+              text,
+              style: AppStyles.small.copyWith(color: AppColors.textBlack),
+            ),
+          ),
         ],
       ),
     );

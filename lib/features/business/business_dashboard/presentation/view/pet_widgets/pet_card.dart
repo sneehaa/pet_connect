@@ -67,7 +67,6 @@ class PetCard extends ConsumerWidget {
                       ),
               ),
             ),
-            // Updated Gradient Overlay (Darker at the bottom for text readability)
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -80,7 +79,6 @@ class PetCard extends ConsumerWidget {
                 ),
               ),
             ),
-            // Pet Name and Age Overlay
             Positioned(
               left: 20,
               bottom: 16,
@@ -89,7 +87,6 @@ class PetCard extends ConsumerWidget {
                 children: [
                   Text(
                     pet.name,
-                    // Use headline style for prominence, override color to white
                     style: AppStyles.headline2.copyWith(
                       fontSize: 30,
                       fontWeight: FontWeight.w900,
@@ -114,7 +111,6 @@ class PetCard extends ConsumerWidget {
                       const SizedBox(width: 6),
                       Text(
                         '${pet.age} months old',
-                        // Use a smaller style, override color to white
                         style: AppStyles.small.copyWith(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -126,7 +122,6 @@ class PetCard extends ConsumerWidget {
                 ],
               ),
             ),
-            // Status Tag
             Positioned(
               top: 16,
               right: 16,
@@ -136,9 +131,7 @@ class PetCard extends ConsumerWidget {
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: pet.available
-                      ? Colors.lightGreen.shade600
-                      : Colors.red.shade600,
+                  color: _getStatusColor(),
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
@@ -149,7 +142,7 @@ class PetCard extends ConsumerWidget {
                   ],
                 ),
                 child: Text(
-                  pet.available ? 'AVAILABLE' : 'ADOPTED',
+                  pet.status.toUpperCase(),
                   style: AppStyles.small.copyWith(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -164,6 +157,19 @@ class PetCard extends ConsumerWidget {
     );
   }
 
+  Color _getStatusColor() {
+    switch (pet.status.toLowerCase()) {
+      case 'available':
+        return Colors.lightGreen.shade600;
+      case 'booked':
+        return Colors.orange.shade600;
+      case 'adopted':
+        return Colors.red.shade600;
+      default:
+        return Colors.grey;
+    }
+  }
+
   Widget _buildPetDetails(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
@@ -171,7 +177,6 @@ class PetCard extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 20),
-          // Breed and Gender Tags
           Wrap(
             spacing: 12,
             runSpacing: 12,
@@ -188,9 +193,14 @@ class PetCard extends ConsumerWidget {
                 label: pet.gender,
                 color: Colors.blue.shade700,
               ),
+              _buildInfoTag(
+                icon: Icons.payments_outlined,
+                label: 'Rs. ${pet.amount}',
+                color: Colors.green.shade700,
+              ),
             ],
           ),
-          const SizedBox(height: 24), // Increased spacing before buttons
+          const SizedBox(height: 24),
           _buildActionButtons(context),
         ],
       ),
@@ -205,22 +215,20 @@ class PetCard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12), // Slightly bolder background color
-        borderRadius: BorderRadius.circular(
-          15,
-        ), // Slightly more rounded corners
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(15),
         border: Border.all(color: color.withOpacity(0.4), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: color, size: 18), // Slightly larger icon
+          Icon(icon, color: color, size: 18),
           const SizedBox(width: 8),
           Text(
             label,
             style: AppStyles.small.copyWith(
               fontSize: 14,
-              fontWeight: FontWeight.w700, // Bolder text
+              fontWeight: FontWeight.w700,
               color: color,
             ),
           ),
@@ -232,7 +240,6 @@ class PetCard extends ConsumerWidget {
   Widget _buildActionButtons(BuildContext context) {
     return Row(
       children: [
-        // EDIT Button (Secondary)
         Expanded(
           child: SizedBox(
             height: 50,
@@ -240,9 +247,7 @@ class PetCard extends ConsumerWidget {
               onPressed: onEdit,
               style: OutlinedButton.styleFrom(
                 side: BorderSide(
-                  color: AppColors.primaryOrange.withOpacity(
-                    0.5,
-                  ), // Use orange for secondary outline
+                  color: AppColors.primaryOrange.withOpacity(0.5),
                   width: 1.5,
                 ),
                 shape: RoundedRectangleBorder(
@@ -253,7 +258,7 @@ class PetCard extends ConsumerWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.edit_outlined,
                     color: AppColors.primaryOrange,
                     size: 18,
@@ -273,7 +278,6 @@ class PetCard extends ConsumerWidget {
           ),
         ),
         const SizedBox(width: 15),
-        // MANAGE Button (Primary)
         Expanded(
           child: SizedBox(
             height: 50,

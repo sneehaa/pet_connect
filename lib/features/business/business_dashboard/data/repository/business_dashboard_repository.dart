@@ -50,7 +50,6 @@ class BusinessDashboardRemoteRepository implements BusinessDashboardRepository {
     List<String>? photoPaths,
     String petId,
   ) {
-    // Just pass everything to remote data source
     return _remoteDataSource.updatePet(pet, photoPaths, petId);
   }
 
@@ -60,8 +59,8 @@ class BusinessDashboardRemoteRepository implements BusinessDashboardRepository {
   }
 
   @override
-  Future<Either<Failure, bool>> changePetStatus(String petId, bool available) {
-    return _remoteDataSource.updatePetStatus(petId, available);
+  Future<Either<Failure, bool>> changePetStatus(String petId, String status) {
+    return _remoteDataSource.updatePetStatus(petId, status);
   }
 
   @override
