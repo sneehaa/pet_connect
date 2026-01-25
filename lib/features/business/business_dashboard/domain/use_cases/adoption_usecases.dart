@@ -5,79 +5,21 @@ import 'package:pet_connect/features/business/business_dashboard/data/repository
 import 'package:pet_connect/features/business/business_dashboard/domain/entity/adoption_entity.dart';
 import 'package:pet_connect/features/business/business_dashboard/domain/repository/business_dashboard_repository.dart';
 
-/// Apply for adoption UseCase
-final applyAdoptionUseCaseProvider = Provider.autoDispose<ApplyAdoptionUseCase>(
-  (ref) {
-    return ApplyAdoptionUseCase(ref.read(businessDashboardRepositoryProvider));
-  },
-);
-
-class ApplyAdoptionUseCase {
-  final BusinessDashboardRepository repository;
-  ApplyAdoptionUseCase(this.repository);
-
-  Future<Either<Failure, AdoptionEntity>> execute(
-    String petId,
-    String message,
-  ) {
-    return repository.applyAdoption(petId, message);
-  }
-}
-
-/// Get adoption status UseCase
-final getAdoptionStatusUseCaseProvider =
-    Provider.autoDispose<GetAdoptionStatusUseCase>((ref) {
-      return GetAdoptionStatusUseCase(
-        ref.read(businessDashboardRepositoryProvider),
-      );
-    });
-
-class GetAdoptionStatusUseCase {
-  final BusinessDashboardRepository repository;
-  GetAdoptionStatusUseCase(this.repository);
-
-  Future<Either<Failure, AdoptionEntity>> execute(String petId) {
-    return repository.getAdoptionStatus(petId);
-  }
-}
-
-/// Get adoption history UseCase
-final getAdoptionHistoryUseCaseProvider =
-    Provider.autoDispose<GetAdoptionHistoryUseCase>((ref) {
-      return GetAdoptionHistoryUseCase(
-        ref.read(businessDashboardRepositoryProvider),
-      );
-    });
-
-class GetAdoptionHistoryUseCase {
-  final BusinessDashboardRepository repository;
-  GetAdoptionHistoryUseCase(this.repository);
-
-  Future<Either<Failure, List<AdoptionEntity>>> execute() {
-    return repository.getAdoptionHistory();
-  }
-}
-
-/// Get pet adoptions UseCase (for businesses)
-final getPetAdoptionsUseCaseProvider =
-    Provider.autoDispose<GetPetAdoptionsUseCase>((ref) {
-      return GetPetAdoptionsUseCase(
-        ref.read(businessDashboardRepositoryProvider),
-      );
-    });
+final getPetAdoptionsUseCaseProvider = Provider<GetPetAdoptionsUseCase>((ref) {
+  return GetPetAdoptionsUseCase(ref.read(businessDashboardRepositoryProvider));
+});
 
 class GetPetAdoptionsUseCase {
   final BusinessDashboardRepository repository;
   GetPetAdoptionsUseCase(this.repository);
 
-  Future<Either<Failure, List<AdoptionEntity>>> execute(String petId) {
+  Future<Either<Failure, List<BusinessAdoptionEntity>>> execute(String petId) {
     return repository.getPetAdoptions(petId);
   }
 }
 
-/// Update adoption status UseCase (for businesses)
 final updateAdoptionStatusUseCaseProvider =
-    Provider.autoDispose<UpdateAdoptionStatusUseCase>((ref) {
+    Provider<UpdateAdoptionStatusUseCase>((ref) {
       return UpdateAdoptionStatusUseCase(
         ref.read(businessDashboardRepositoryProvider),
       );
@@ -87,10 +29,69 @@ class UpdateAdoptionStatusUseCase {
   final BusinessDashboardRepository repository;
   UpdateAdoptionStatusUseCase(this.repository);
 
-  Future<Either<Failure, AdoptionEntity>> execute(
+  Future<Either<Failure, BusinessAdoptionEntity>> execute(
     String adoptionId,
     String status,
+    String? rejectionReason,
   ) {
-    return repository.updateAdoptionStatus(adoptionId, status);
+    return repository.updateAdoptionStatus(adoptionId, status, rejectionReason);
+  }
+}
+
+final approveAdoptionUseCaseProvider = Provider<ApproveAdoptionUseCase>((ref) {
+  return ApproveAdoptionUseCase(ref.read(businessDashboardRepositoryProvider));
+});
+
+class ApproveAdoptionUseCase {
+  final BusinessDashboardRepository repository;
+  ApproveAdoptionUseCase(this.repository);
+
+  Future<Either<Failure, BusinessAdoptionEntity>> execute(String adoptionId) {
+    return repository.approveAdoption(adoptionId);
+  }
+}
+
+final rejectAdoptionUseCaseProvider = Provider<RejectAdoptionUseCase>((ref) {
+  return RejectAdoptionUseCase(ref.read(businessDashboardRepositoryProvider));
+});
+
+class RejectAdoptionUseCase {
+  final BusinessDashboardRepository repository;
+  RejectAdoptionUseCase(this.repository);
+
+  Future<Either<Failure, BusinessAdoptionEntity>> execute(
+    String adoptionId,
+    String reason,
+  ) {
+    return repository.rejectAdoption(adoptionId, reason);
+  }
+}
+
+final getAdoptionByIdUseCaseProvider = Provider<GetAdoptionByIdUseCase>((ref) {
+  return GetAdoptionByIdUseCase(ref.read(businessDashboardRepositoryProvider));
+});
+
+class GetAdoptionByIdUseCase {
+  final BusinessDashboardRepository repository;
+  GetAdoptionByIdUseCase(this.repository);
+
+  Future<Either<Failure, BusinessAdoptionEntity>> execute(String adoptionId) {
+    return repository.getAdoptionById(adoptionId);
+  }
+}
+
+final getBusinessAdoptionsUseCaseProvider =
+    Provider<GetBusinessAdoptionsUseCase>((ref) {
+      return GetBusinessAdoptionsUseCase(
+        ref.read(businessDashboardRepositoryProvider),
+      );
+    });
+
+class GetBusinessAdoptionsUseCase {
+  final BusinessDashboardRepository repository;
+  GetBusinessAdoptionsUseCase(this.repository);
+
+  Future<Either<Failure, List<BusinessAdoptionEntity>>> execute() {
+    return repository.getBusinessAdoptions();
   }
 }

@@ -5,6 +5,7 @@ import 'package:pet_connect/features/business/business_dashboard/domain/entity/a
 import '../../domain/entity/pet_entity.dart';
 
 abstract class BusinessDashboardRepository {
+  // Pet management methods
   Future<Either<Failure, List<PetEntity>>> getPetsByBusiness(String businessId);
   Future<Either<Failure, PetEntity>> addPet(
     PetEntity pet,
@@ -17,17 +18,27 @@ abstract class BusinessDashboardRepository {
   );
   Future<Either<Failure, bool>> deletePet(String petId);
   Future<Either<Failure, bool>> changePetStatus(String petId, String status);
-  Future<Either<Failure, AdoptionEntity>> applyAdoption(
+
+  Future<Either<Failure, List<BusinessAdoptionEntity>>> getPetAdoptions(
     String petId,
-    String message,
   );
-  Future<Either<Failure, AdoptionEntity>> getAdoptionStatus(String petId);
-  Future<Either<Failure, List<AdoptionEntity>>> getAdoptionHistory();
-  Future<Either<Failure, List<AdoptionEntity>>> getPetAdoptions(String petId);
-  Future<Either<Failure, AdoptionEntity>> updateAdoptionStatus(
+  Future<Either<Failure, BusinessAdoptionEntity>> updateAdoptionStatus(
     String adoptionId,
     String status,
+    String? rejectionReason,
   );
+  Future<Either<Failure, BusinessAdoptionEntity>> approveAdoption(
+    String adoptionId,
+  );
+  Future<Either<Failure, BusinessAdoptionEntity>> rejectAdoption(
+    String adoptionId,
+    String reason,
+  );
+  Future<Either<Failure, BusinessAdoptionEntity>> getAdoptionById(
+    String adoptionId,
+  );
+
+  Future<Either<Failure, List<BusinessAdoptionEntity>>> getBusinessAdoptions();
 
   /// logout function
   Future<void> logout();
