@@ -5,10 +5,10 @@ class ApiEndpoints {
   static const Duration receiveTimeout = Duration(seconds: 1000);
 
   // Base URL - Update this to your actual IP
-  static const String baseUrl = "http://192.168.68.106:5500";
+  static const String baseUrl = "http://192.168.68.127:5500";
 
   // User service endpoints
-  static const String userBaseUrl = "$baseUrl/api/user/";
+  static const String userBaseUrl = "$baseUrl/api/users/";
   static const String userRegister = "${userBaseUrl}register";
   static const String userLogin = "${userBaseUrl}login";
   static String getUserProfile(String userId) =>
@@ -22,7 +22,7 @@ class ApiEndpoints {
 
   // Business service URL
   static const String businessBaseUrl =
-      "http://192.168.68.106:5501/api/business/";
+      "http://192.168.68.127:5501/api/business/";
   static const String businessLogin = "${businessBaseUrl}login";
   static const String businessRegister = "${businessBaseUrl}register";
   static const String businessVerifyEmail = "${businessBaseUrl}verify-email";
@@ -36,12 +36,9 @@ class ApiEndpoints {
   static const String updateBusinessProfile =
       "${businessBaseUrl}update-profile";
 
-  // Business details by ID (public endpoint)
-  static String getBusinessDetails(String businessId) =>
-      "$businessBaseUrl$businessId";
-
+  static String getBusinessDetails(String id) => "$businessBaseUrl/$id";
   // Pets service URL
-  static const String petsBaseUrl = "http://192.168.68.106:5502/api/pets/";
+  static const String petsBaseUrl = "http://192.168.68.127:5502/api/pets/";
 
   // Public pet routes
   static String getPetsByBusiness(String businessId) =>
@@ -56,7 +53,7 @@ class ApiEndpoints {
 
   // Adoption service URL
   static const String adoptionBaseUrl =
-      "http://192.168.68.106:5503/api/adoption";
+      "http://192.168.68.127:5503/api/adoption";
 
   /// Apply for adoption
   static String applyForAdoption(String petId) =>
@@ -77,7 +74,7 @@ class ApiEndpoints {
 
   // In your ApiEndpoints class
   static String notificationBaseUrl =
-      "http://192.168.68.106:5505/api/notification";
+      "http://192.168.68.127:5505/api/notification";
 
   // Notification endpoints
   static String getUserNotifications = "$notificationBaseUrl/user";
@@ -89,9 +86,33 @@ class ApiEndpoints {
   static String clearAllNotifications = "$notificationBaseUrl/clear";
 
   // Payment service URL
-  static String paymentBaseUrl = "http://192.168.68.106:5504/api/payments/";
-  static String initiatePayment = "${paymentBaseUrl}khalti/initiate";
-  static String verifyPayment = "${paymentBaseUrl}khalti/verify";
-  static String getUserPayments = "${paymentBaseUrl}transactions/my-history";
-  String getReceipt(String paymentId) => "${paymentBaseUrl}receipts/$paymentId";
+  static String paymentBaseUrl = "http://192.168.68.127:5504/api/payments/";
+  static String loadWallet = "${paymentBaseUrl}wallet/load";
+
+  static String getWalletBalance = "${paymentBaseUrl}wallet/balance";
+
+  static String getWalletTransactions = "${paymentBaseUrl}wallet/transactions";
+
+  static String initiatePayment = "${paymentBaseUrl}initiate";
+
+  static String processPayment = "${paymentBaseUrl}process";
+
+  static String getUserPayments = "${paymentBaseUrl}user/payments";
+
+  static String getPaymentSummary(String paymentId) =>
+      "${paymentBaseUrl}summary/$paymentId";
+
+  static String getPaymentDetails(String paymentId) =>
+      "$paymentBaseUrl$paymentId";
+
+  static String getBusinessEarnings = "${paymentBaseUrl}business/earnings";
+
+  static String getBusinessWalletBalance =
+      "${paymentBaseUrl}business/wallet/balance";
+
+  static String getBusinessWalletTransactions =
+      "${paymentBaseUrl}business/wallet/transactions";
+
+  static String getAllTransactions = "${paymentBaseUrl}admin/transactions";
+  static String getAllWallets = "${paymentBaseUrl}admin/wallets";
 }

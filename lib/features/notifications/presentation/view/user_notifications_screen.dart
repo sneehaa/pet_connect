@@ -18,27 +18,63 @@ class _UserNotificationsScreenState
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(notificationViewModelProvider.notifier).getUserNotifications();
-    });
+    // Use Future.microtask for a cleaner lifecycle entry
+    Future.microtask(
+      () => ref
+          .read(notificationViewModelProvider.notifier)
+          .getUserNotifications(),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<NotificationState>(notificationViewModelProvider, (
-      previous,
-      next,
-    ) {
-      if (next.message != null) {
+    final state = ref.watch(notificationViewModelProvider);
+
+    // Listen for errors/messages
+    ref.listen<NotificationState>(notificationViewModelProvider, (prev, next) {
+      if (next.message != null && next.message != prev?.message) {
         showSnackBar(
           context: context,
           message: next.message!,
-          isSuccess: !next.message!.contains('Failed'),
+          isSuccess: !next.message!.toLowerCase().contains('failed'),
         );
       }
     });
 
-    final state = ref.watch(notificationViewModelProvider);
+    return Scaffold(
+      body: RefreshIndicator(
+        onRefresh: () => ref
+            .read(notificationViewModelProvider.notifier)
+            .getUserNotifications(),
+        child: _buildBody(state),
+      ),
+    );
+  }
+
+  Widget _buildBody(NotificationState state) {
+    if (state.isLoading && state.notifications.isEmpty) {
+      return const Center(child: CircularProgressIndicator.adaptive());
+    }
+
+    if (state.notifications.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.notifications_off_outlined,
+              size: 64,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'No notifications yet',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          ],
+        ),
+      );
+    }
 
     return NotificationsScreenContent(
       state: state,
@@ -53,6 +89,33 @@ class _UserNotificationsScreenState
           .markNotificationAsRead(id),
       title: 'My Notifications',
       emptyMessage: 'No notifications yet.',
+    );
+  }
+
+  void _confirmClearAll(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear all?'),
+        content: const Text(
+          'This will remove all your notifications permanently.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              ref
+                  .read(notificationViewModelProvider.notifier)
+                  .clearAllNotifications();
+              Navigator.pop(context);
+            },
+            child: const Text('Clear All', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
     );
   }
 }

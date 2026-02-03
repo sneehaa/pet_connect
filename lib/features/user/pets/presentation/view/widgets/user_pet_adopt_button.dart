@@ -134,7 +134,7 @@ class UserPetAdoptButton extends StatelessWidget {
       MaterialPageRoute(
         builder: (context) =>
             AdoptionApplicationScreen(petId: pet.id, petName: pet.name),
-        fullscreenDialog: true, 
+        fullscreenDialog: true,
       ),
     );
   }

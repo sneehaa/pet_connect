@@ -33,4 +33,9 @@ class AuthRemoteRepositoy implements AuthRepository {
   Future<Either<Failure, bool>> loginUser(String email, String password) async {
     return await _authRemoteDataSource.loginUser(email, password);
   }
+
+  @override
+  Future<Either<Failure, bool>> logout() async {
+    return await _authRemoteDataSource.logout();
+  }
 }

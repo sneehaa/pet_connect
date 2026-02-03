@@ -20,7 +20,7 @@ class BusinessEntity extends Equatable {
     this.adoptionPolicy,
     this.address,
     required this.role,
-    this.profileImageUrl
+    this.profileImageUrl,
   });
 
   @override
@@ -33,6 +33,6 @@ class BusinessEntity extends Equatable {
     adoptionPolicy,
     address,
     role,
-    profileImageUrl
+    profileImageUrl,
   ];
 }

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:pet_connect/config/themes/app_colors.dart';
 import 'package:pet_connect/config/themes/app_styles.dart';
 import 'package:pet_connect/core/utils/snackbar_utils.dart';
@@ -26,132 +24,85 @@ class _AdoptionRequestsScreenState
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (widget.petId != null) {
-        ref
-            .read(adoptionViewModelProvider.notifier)
-            .getPetAdoptions(widget.petId!);
-      } else {
-        ref.read(adoptionViewModelProvider.notifier).getBusinessAdoptions();
-      }
+      _fetchData();
     });
+  }
+
+  void _fetchData() {
+    if (widget.petId != null) {
+      ref
+          .read(adoptionViewModelProvider.notifier)
+          .getPetAdoptions(widget.petId!);
+    } else {
+      ref.read(adoptionViewModelProvider.notifier).getBusinessAdoptions();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(adoptionViewModelProvider);
+
     ref.listen<BusinessAdoptionState>(adoptionViewModelProvider, (
       previous,
       next,
     ) {
-      if (next.message != null) {
-        showSnackBar(
-          context: context,
-          message: next.message!,
-          isSuccess:
-              !next.message!.contains('Failed') &&
-              !next.message!.contains('error'),
-        );
+      if (previous?.status == BusinessAdoptionStatus.loading &&
+          next.status != BusinessAdoptionStatus.loading) {
+        if (next.message != null && next.message!.isNotEmpty) {
+          showSnackBar(
+            context: context,
+            message: next.message!,
+            isSuccess: next.status != BusinessAdoptionStatus.error,
+          );
+
+          if (next.status == BusinessAdoptionStatus.loaded &&
+              next.message!.toLowerCase().contains('success')) {
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (mounted) Navigator.pop(context);
+            });
+          }
+          ref.read(adoptionViewModelProvider.notifier).clearMessage();
+        }
       }
     });
 
-    final state = ref.watch(adoptionViewModelProvider);
     final filteredAdoptions = _filterAdoptions(state.adoptions);
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: widget.petId != null
+          ? AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              title: Text('Requests', style: AppStyles.headline3),
+              leading: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back_ios,
+                  color: AppColors.textBlack,
+                ),
+                onPressed: () => Navigator.pop(context),
+              ),
+            )
+          : null,
       body: state.status == BusinessAdoptionStatus.loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primaryOrange),
+            )
           : state.status == BusinessAdoptionStatus.error
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    color: AppColors.errorRed,
-                    size: 60,
-                  ),
-                  const SizedBox(height: 20),
-                  Text('Failed to load requests', style: AppStyles.headline3),
-                  Text(
-                    state.message ?? 'Please try again',
-                    style: AppStyles.subtitle,
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (widget.petId != null) {
-                        ref
-                            .read(adoptionViewModelProvider.notifier)
-                            .getPetAdoptions(widget.petId!);
-                      } else {
-                        // FIXED: Call getBusinessAdoptions
-                        ref
-                            .read(adoptionViewModelProvider.notifier)
-                            .getBusinessAdoptions();
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryOrange,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: Text('Retry', style: AppStyles.button),
-                  ),
-                ],
-              ),
-            )
+          ? _buildErrorState(state.message)
           : filteredAdoptions.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.inbox, color: AppColors.primaryOrange, size: 80),
-                  const SizedBox(height: 20),
-                  Text('No Adoption Requests', style: AppStyles.headline3),
-                  Text(
-                    widget.petId != null
-                        ? 'No one has applied for this pet yet'
-                        : 'No adoption requests found',
-                    style: AppStyles.subtitle,
-                  ),
-                ],
-              ),
-            )
+          ? _buildEmptyState()
           : RefreshIndicator(
-              onRefresh: () async {
-                if (widget.petId != null) {
-                  await ref
-                      .read(adoptionViewModelProvider.notifier)
-                      .getPetAdoptions(widget.petId!);
-                } else {
-                  // FIXED: Call getBusinessAdoptions
-                  await ref
-                      .read(adoptionViewModelProvider.notifier)
-                      .getBusinessAdoptions();
-                }
-              },
-              backgroundColor: AppColors.background,
+              onRefresh: () async => _fetchData(),
               color: AppColors.primaryOrange,
               child: ListView.builder(
                 padding: const EdgeInsets.all(20),
                 itemCount: filteredAdoptions.length,
-                itemBuilder: (context, index) {
-                  final adoption = filteredAdoptions[index];
-                  return _buildAdoptionCard(adoption, context);
-                },
+                itemBuilder: (context, index) =>
+                    _buildAdoptionCard(filteredAdoptions[index], context),
               ),
             ),
     );
-  }
-
-  List<BusinessAdoptionEntity> _filterAdoptions(
-    List<BusinessAdoptionEntity> adoptions,
-  ) {
-    if (_selectedFilter == 'all') return adoptions;
-    return adoptions
-        .where((adoption) => adoption.status == _selectedFilter)
-        .toList();
   }
 
   Widget _buildAdoptionCard(
@@ -159,6 +110,11 @@ class _AdoptionRequestsScreenState
     BuildContext context,
   ) {
     final appDetails = adoption.applicationDetails;
+    final bool isPending = adoption.status.toLowerCase() == 'pending';
+    final bool isApproved =
+        adoption.status.toLowerCase() == 'approved' ||
+        adoption.status.toLowerCase() == 'completed' ||
+        adoption.status.toLowerCase() == 'payment_pending';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
@@ -176,10 +132,8 @@ class _AdoptionRequestsScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header with status
-          // Replace the header Container (around line 170-210) with this fixed version:
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(15),
             decoration: BoxDecoration(
               color: _getStatusColor(adoption.status).withOpacity(0.1),
               borderRadius: const BorderRadius.only(
@@ -190,280 +144,126 @@ class _AdoptionRequestsScreenState
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Wrap the text in Flexible to prevent overflow
                 Flexible(
                   child: Text(
-                    'Request #${adoption.id?.substring(0, 8) ?? 'N/A'}',
-                    style: AppStyles.headline3.copyWith(
+                    'Request #${adoption.id?.substring(0, 8).toUpperCase() ?? 'N/A'}',
+                    style: AppStyles.body.copyWith(
                       color: _getStatusColor(adoption.status),
+                      fontWeight: FontWeight.bold,
                     ),
-                    overflow: TextOverflow
-                        .ellipsis, // Add ellipsis if text is too long
                   ),
                 ),
-                const SizedBox(width: 8), // Add spacing between elements
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
+                    horizontal: 10,
+                    vertical: 4,
                   ),
                   decoration: BoxDecoration(
                     color: _getStatusColor(adoption.status),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     adoption.status.toUpperCase(),
-                    style: GoogleFonts.alice(
+                    style: AppStyles.small.copyWith(
                       color: AppColors.primaryWhite,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          // Request Details
           Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Applicant Name
-                if (appDetails != null)
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.person,
-                        color: AppColors.textLightGrey,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Applicant: ${appDetails.fullName}',
-                          style: AppStyles.body,
-                        ),
-                      ),
-                    ],
-                  ),
-                if (appDetails != null) const SizedBox(height: 10),
-                // Pet ID
-                Row(
-                  children: [
-                    Icon(Icons.pets, color: AppColors.textLightGrey, size: 18),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Pet ID: ${adoption.petId}',
-                        style: AppStyles.body,
-                      ),
-                    ),
-                  ],
+                _buildInfoRow(Icons.person, 'Applicant', appDetails?.fullName),
+                _buildInfoRow(Icons.pets, 'Pet ID', adoption.petId),
+                _buildInfoRow(Icons.phone, 'Phone', appDetails?.phoneNumber),
+                _buildInfoRow(
+                  Icons.location_on,
+                  'Address',
+                  appDetails?.address,
                 ),
-                const SizedBox(height: 10),
-                // User ID
-                Row(
-                  children: [
-                    Icon(
-                      Icons.person_outline,
-                      color: AppColors.textLightGrey,
-                      size: 18,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'User ID: ${adoption.userId}',
-                        style: AppStyles.body,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                // Phone Number
-                if (appDetails != null)
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.phone,
-                        color: AppColors.textLightGrey,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Phone: ${appDetails.phoneNumber}',
-                          style: AppStyles.body,
-                        ),
-                      ),
-                    ],
-                  ),
-                if (appDetails != null) const SizedBox(height: 10),
-                // Address
-                if (appDetails != null)
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.location_on,
-                        color: AppColors.textLightGrey,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Address: ${appDetails.address}',
-                          style: AppStyles.body,
-                        ),
-                      ),
-                    ],
-                  ),
-                if (appDetails != null) const SizedBox(height: 10),
-                // Date
-                if (adoption.createdAt != null)
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_today,
-                        color: AppColors.textLightGrey,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        DateFormat('MMM dd, yyyy').format(adoption.createdAt!),
-                        style: AppStyles.small,
-                      ),
-                    ],
-                  ),
-                const SizedBox(height: 15),
-                // Additional application details
+                const Divider(height: 30),
                 if (appDetails != null) ...[
                   _buildDetailRow('Home Type:', appDetails.homeType),
                   _buildDetailRow('Employment:', appDetails.employmentStatus),
-                  if (appDetails.previousPetExperience != null)
-                    _buildDetailRow(
-                      'Experience:',
-                      appDetails.previousPetExperience!,
-                    ),
                   _buildDetailRow(
                     'Other Pets:',
                     appDetails.hasOtherPets ? 'Yes' : 'No',
                   ),
-                  if (appDetails.hasOtherPets)
-                    _buildDetailRow(
-                      'Other Pets Details:',
-                      appDetails.otherPetsDetails,
-                    ),
                 ],
-                // Message
-                if (appDetails != null &&
-                    appDetails.message != null &&
-                    appDetails.message!.isNotEmpty)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Message:',
-                        style: AppStyles.body.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        appDetails.message!,
-                        style: AppStyles.small.copyWith(
-                          color: AppColors.textDarkGrey,
-                        ),
-                      ),
-                      const SizedBox(height: 15),
-                    ],
-                  ),
-                // Action Buttons
-                if (adoption.status == 'pending')
+                const SizedBox(height: 20),
+                if (isPending)
                   Row(
                     children: [
                       Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            _updateAdoptionStatus(
-                              adoption.id!,
-                              'approved',
-                              context,
-                            );
-                          },
+                        child: ElevatedButton(
+                          onPressed: () => _updateAdoptionStatus(
+                            adoption.id!,
+                            'approved',
+                            context,
+                          ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
+                            backgroundColor: AppColors.successGreen,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
-                          icon: const Icon(
-                            Icons.check,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                          label: Text(
-                            'Approve',
-                            style: AppStyles.button.copyWith(fontSize: 16),
-                          ),
+                          child: Text('Approve', style: AppStyles.button),
                         ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            _showRejectReasonDialog(adoption.id!, context);
-                          },
+                        child: ElevatedButton(
+                          onPressed: () =>
+                              _showRejectReasonDialog(adoption.id!, context),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.errorRed,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
-                          icon: const Icon(
-                            Icons.close,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                          label: Text(
-                            'Reject',
-                            style: AppStyles.button.copyWith(fontSize: 16),
-                          ),
+                          child: Text('Reject', style: AppStyles.button),
                         ),
                       ),
                     ],
-                  ),
-                if (adoption.status != 'pending')
+                  )
+                else
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppColors.backgroundGrey.withOpacity(0.2),
+                      color: AppColors.background,
                       borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isApproved
+                            ? AppColors.successGreen.withOpacity(0.3)
+                            : AppColors.errorRed.withOpacity(0.3),
+                      ),
                     ),
                     child: Row(
                       children: [
                         Icon(
-                          adoption.status == 'approved'
-                              ? Icons.check_circle
-                              : Icons.cancel,
-                          color: adoption.status == 'approved'
-                              ? Colors.green
+                          isApproved ? Icons.check_circle : Icons.cancel,
+                          color: isApproved
+                              ? AppColors.successGreen
                               : AppColors.errorRed,
                           size: 20,
                         ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            adoption.status == 'approved'
+                            isApproved
                                 ? 'This request has been approved'
                                 : 'This request has been rejected',
                             style: AppStyles.small.copyWith(
-                              color: adoption.status == 'approved'
-                                  ? Colors.green
+                              color: isApproved
+                                  ? AppColors.successGreen
                                   : AppColors.errorRed,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
@@ -478,26 +278,124 @@ class _AdoptionRequestsScreenState
     );
   }
 
-  Widget _buildDetailRow(String label, String? value) {
-    if (value == null || value.isEmpty) return const SizedBox.shrink();
-
+  Widget _buildInfoRow(IconData icon, String label, String? value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 5),
+      padding: const EdgeInsets.only(bottom: 8.0),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: AppColors.primaryOrange, size: 16),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text('$label: ${value ?? "N/A"}', style: AppStyles.body),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String? value) {
+    if (value == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
         children: [
           Text(
             label,
-            style: AppStyles.small.copyWith(
-              color: AppColors.textDarkGrey,
-              fontWeight: FontWeight.w600,
-            ),
+            style: AppStyles.small.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(width: 5),
-          Expanded(
+          Text(value, style: AppStyles.small),
+        ],
+      ),
+    );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return AppColors.warningYellow;
+      case 'approved':
+      case 'completed':
+        return AppColors.successGreen;
+      case 'rejected':
+        return AppColors.errorRed;
+      case 'payment_pending':
+        return Colors.blue;
+      default:
+        return AppColors.textLightGrey;
+    }
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.inbox_outlined, color: AppColors.iconGrey, size: 80),
+          const SizedBox(height: 16),
+          Text('No Requests Yet', style: AppStyles.headline3),
+          Text('Check back later for applications.', style: AppStyles.subtitle),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String? message) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.cloud_off, color: AppColors.errorRed, size: 60),
+            const SizedBox(height: 16),
+            Text('Something went wrong', style: AppStyles.headline3),
+            Text(
+              message ?? 'Unknown error',
+              style: AppStyles.subtitle,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _fetchData,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryOrange,
+              ),
+              child: Text('Retry', style: AppStyles.button),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _updateAdoptionStatus(String id, String status, BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.primaryWhite,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Approve Request', style: AppStyles.headline3),
+        content: Text(
+          'Do you want to approve this applicant?',
+          style: AppStyles.body,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel', style: AppStyles.small),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.successGreen,
+            ),
+            onPressed: () {
+              ref.read(adoptionViewModelProvider.notifier).approveAdoption(id);
+              Navigator.pop(ctx);
+            },
             child: Text(
-              value,
-              style: AppStyles.small.copyWith(color: AppColors.textDarkGrey),
+              'Confirm',
+              style: AppStyles.button.copyWith(fontSize: 14),
             ),
           ),
         ],
@@ -505,200 +403,56 @@ class _AdoptionRequestsScreenState
     );
   }
 
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'pending':
-        return Colors.orange;
-      case 'approved':
-        return Colors.green;
-      case 'rejected':
-        return AppColors.errorRed;
-      case 'payment_pending':
-        return Colors.blue;
-      case 'completed':
-        return Colors.purple;
-      default:
-        return AppColors.textLightGrey;
-    }
+  void _showRejectReasonDialog(String id, BuildContext context) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.primaryWhite,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Reject Request', style: AppStyles.headline3),
+        content: TextField(
+          controller: controller,
+          maxLines: 3,
+          style: AppStyles.body,
+          decoration: InputDecoration(
+            hintText: 'Reason for rejection...',
+            hintStyle: AppStyles.small,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel', style: AppStyles.small),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.errorRed,
+            ),
+            onPressed: () {
+              if (controller.text.trim().isEmpty) return;
+              ref
+                  .read(adoptionViewModelProvider.notifier)
+                  .rejectAdoption(id, controller.text.trim());
+              Navigator.pop(ctx);
+            },
+            child: Text(
+              'Reject',
+              style: AppStyles.button.copyWith(fontSize: 14),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
-  // FIXED: Renamed to _updateAdoptionStatus
-  void _updateAdoptionStatus(
-    String adoptionId,
-    String status,
-    BuildContext context,
+  List<BusinessAdoptionEntity> _filterAdoptions(
+    List<BusinessAdoptionEntity> adoptions,
   ) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Row(
-            children: [
-              Icon(
-                status == 'approved' ? Icons.check_circle : Icons.warning,
-                color: status == 'approved' ? Colors.green : AppColors.errorRed,
-                size: 28,
-              ),
-              const SizedBox(width: 12),
-              Text(
-                status == 'approved' ? 'Approve Request' : 'Reject Request',
-                style: AppStyles.headline3,
-              ),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                status == 'approved'
-                    ? 'Are you sure you want to approve this adoption request?'
-                    : 'Please provide a reason for rejection:',
-                style: AppStyles.body,
-              ),
-              const SizedBox(height: 10),
-              if (status == 'rejected')
-                TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Enter rejection reason',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  maxLines: 3,
-                  onChanged: (value) {
-                    // Store the reason
-                  },
-                ),
-              if (status == 'approved')
-                Text(
-                  'The user will be notified and can proceed with adoption.',
-                  style: AppStyles.small.copyWith(
-                    color: AppColors.textLightGrey,
-                  ),
-                ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'Cancel',
-                style: AppStyles.button.copyWith(color: AppColors.textDarkGrey),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                if (status == 'approved') {
-                  ref
-                      .read(adoptionViewModelProvider.notifier)
-                      .approveAdoption(adoptionId);
-                } else {
-                  // For rejection, we'll handle it in the separate dialog
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: status == 'approved'
-                    ? Colors.green
-                    : AppColors.errorRed,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text(
-                status == 'approved' ? 'Approve' : 'Reject',
-                style: AppStyles.button,
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showRejectReasonDialog(String adoptionId, BuildContext context) {
-    final TextEditingController reasonController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Row(
-            children: [
-              Icon(Icons.warning, color: AppColors.errorRed, size: 28),
-              const SizedBox(width: 12),
-              Text('Reject Request', style: AppStyles.headline3),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Please provide a reason for rejection:',
-                style: AppStyles.body,
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: reasonController,
-                decoration: InputDecoration(
-                  hintText: 'Enter rejection reason',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'This action cannot be undone. The user will be notified.',
-                style: AppStyles.small.copyWith(color: AppColors.textLightGrey),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'Cancel',
-                style: AppStyles.button.copyWith(color: AppColors.textDarkGrey),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final reason = reasonController.text.trim();
-                if (reason.isEmpty) {
-                  showSnackBar(
-                    context: context,
-                    message: 'Please provide a rejection reason',
-                    isSuccess: false,
-                  );
-                  return;
-                }
-
-                Navigator.pop(context);
-                ref
-                    .read(adoptionViewModelProvider.notifier)
-                    .rejectAdoption(adoptionId, reason);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.errorRed,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text('Reject', style: AppStyles.button),
-            ),
-          ],
-        );
-      },
-    );
+    if (_selectedFilter == 'all') return adoptions;
+    return adoptions
+        .where((a) => a.status.toLowerCase() == _selectedFilter)
+        .toList();
   }
 }

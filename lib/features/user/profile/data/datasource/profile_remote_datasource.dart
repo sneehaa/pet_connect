@@ -24,7 +24,7 @@ class UserProfileRemoteDataSource {
   UserProfileRemoteDataSource(this.dio, this.secureStorage);
 
   Future<String?> _getUserAuthToken() async {
-    return await secureStorage.read(key: 'userAuthToken');
+    return await secureStorage.read(key: 'authenticationToken');
   }
 
   Future<String?> _getUserId() async {

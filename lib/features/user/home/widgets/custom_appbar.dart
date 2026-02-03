@@ -7,6 +7,8 @@ class CustomAppBar extends StatelessWidget {
   final String userName;
   final int unreadNotificationCount;
   final VoidCallback? onNotificationTap;
+  final VoidCallback? onLogoutTap;
+  final VoidCallback? onWalletTap;
 
   const CustomAppBar({
     super.key,
@@ -14,6 +16,8 @@ class CustomAppBar extends StatelessWidget {
     this.userName = 'Pet Lover',
     this.unreadNotificationCount = 0,
     this.onNotificationTap,
+    this.onWalletTap,
+    this.onLogoutTap,
   });
 
   static final List<Map<String, dynamic>> _screenData = [
@@ -84,57 +88,42 @@ class CustomAppBar extends StatelessWidget {
                   ),
                 ],
               ),
-              GestureDetector(
-                onTap: onNotificationTap,
-                child: Container(
-                  width: 45,
-                  height: 45,
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryWhite,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade300, width: 1),
+
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: onWalletTap,
+                    icon: Icon(
+                      Icons.account_balance_wallet_outlined,
+                      color: AppColors.textBlack,
+                      size: 24,
+                    ),
+                    tooltip: 'Wallet',
                   ),
-                  child: Stack(
-                    children: [
-                      Center(
-                        child: Image.asset(
-                          'assets/icons/bell.png',
-                          height: 26,
-                          color: AppColors.textBlack,
-                        ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: onNotificationTap,
+                    child: _buildActionButton(
+                      icon: Image.asset(
+                        'assets/icons/bell.png',
+                        height: 24,
+                        color: AppColors.textBlack,
                       ),
-                      if (unreadNotificationCount > 0)
-                        Positioned(
-                          right: 5,
-                          top: 5,
-                          child: Container(
-                            width: 20,
-                            height: 20,
-                            decoration: BoxDecoration(
-                              color: AppColors.errorRed,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: AppColors.primaryWhite,
-                                width: 2,
-                              ),
-                            ),
-                            child: Center(
-                              child: Text(
-                                unreadNotificationCount > 9
-                                    ? '9+'
-                                    : unreadNotificationCount.toString(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
+                      badgeCount: unreadNotificationCount,
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 12),
+                  GestureDetector(
+                    onTap: onLogoutTap,
+                    child: _buildActionButton(
+                      icon: const Icon(
+                        Icons.logout_rounded,
+                        color: Colors.redAccent,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -198,6 +187,48 @@ class CustomAppBar extends StatelessWidget {
               ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton({required Widget icon, int badgeCount = 0}) {
+    return Container(
+      width: 45,
+      height: 45,
+      decoration: BoxDecoration(
+        color: AppColors.primaryWhite,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200, width: 1),
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          icon,
+          if (badgeCount > 0)
+            Positioned(
+              right: 6,
+              top: 6,
+              child: Container(
+                width: 18,
+                height: 18,
+                decoration: BoxDecoration(
+                  color: AppColors.errorRed,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.primaryWhite, width: 2),
+                ),
+                child: Center(
+                  child: Text(
+                    badgeCount > 9 ? '9+' : badgeCount.toString(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );

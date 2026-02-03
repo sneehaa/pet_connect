@@ -67,7 +67,7 @@ class UserAdoptionViewModel extends StateNotifier<UserAdoptionState> {
           adoptions: updatedAdoptions,
           currentAdoption: adoption,
           message: 'Adoption application submitted successfully!',
-          applicationFormData: null, // Clear form data
+          applicationFormData: null,
         );
       },
     );

@@ -139,7 +139,21 @@ class AuthRemoteDataSource {
           final token = responseData['token'];
           await secureStorage.write(key: "authenticationToken", value: token);
 
-          // Simply return success if token exists, no need to verify email
+          // Extract and store userId from the user object (using "_id" as per your API response)
+          if (responseData.containsKey('user') &&
+              responseData['user'] != null) {
+            final userId = responseData['user']['_id']
+                ?.toString(); // Key is "_id" in your response
+            if (userId != null) {
+              await secureStorage.write(key: 'userId', value: userId);
+            } else {
+              // Optional: Handle if _id is missing (though it shouldn't be based on your logs)
+              return Left(
+                Failure(error: "User ID not found in login response"),
+              );
+            }
+          }
+
           return const Right(true);
         } else {
           return Left(
@@ -168,6 +182,19 @@ class AuthRemoteDataSource {
       }
     } catch (e) {
       return Left(Failure(error: "An unexpected error occurred."));
+    }
+  }
+
+  Future<Either<Failure, bool>> logout() async {
+    try {
+      await secureStorage.delete(key: 'authenticationToken');
+      await secureStorage.delete(key: 'user_data');
+      await secureStorage.delete(key: 'user_fullName');
+      await secureStorage.delete(key: 'user_email');
+      await secureStorage.delete(key: 'user_phoneNumber');
+      return const Right(true);
+    } catch (e) {
+      return Left(Failure(error: e.toString()));
     }
   }
 }

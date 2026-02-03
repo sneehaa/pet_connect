@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/legacy.dart'; // Keep legacy for StateNotifierProvider
 import 'package:pet_connect/features/user/auth/domain/use_cases/login_usecase.dart';
+import 'package:pet_connect/features/user/auth/domain/use_cases/logout_usecase.dart';
 import 'package:pet_connect/features/user/auth/domain/use_cases/register_usecase.dart';
 
 import '../../domain/entity/auth_entity.dart';
@@ -11,6 +12,7 @@ final authViewModelProvider = StateNotifierProvider<AuthViewModel, AuthState>(
     ref.read(loginUseCaseProvider),
     ref.read(verifyOtpUseCaseProvider),
     ref.read(resendOtpUseCaseProvider),
+    ref.read(logoutUseCaseProvider),
   ),
 );
 
@@ -19,12 +21,14 @@ class AuthViewModel extends StateNotifier<AuthState> {
   final LoginUseCase _loginUseCase;
   final VerifyOtpUseCase _verifyOtpUseCase;
   final ResendOtpUseCase _resendOtpUseCase;
+  final LogoutUseCase _logoutUseCase;
 
   AuthViewModel(
     this._registerUseCase,
     this._loginUseCase,
     this._verifyOtpUseCase,
     this._resendOtpUseCase,
+    this._logoutUseCase,
   ) : super(AuthState.initial());
 
   Future<void> registerUser(AuthEntity entity) async {
@@ -65,7 +69,7 @@ class AuthViewModel extends StateNotifier<AuthState> {
       (success) => state = state.copyWith(
         isLoading: false,
         message: 'Email Verified Successfully',
-        flow: AuthFlow.authenticated, 
+        flow: AuthFlow.authenticated,
         isError: false,
       ),
     );
@@ -107,6 +111,23 @@ class AuthViewModel extends StateNotifier<AuthState> {
         flow: AuthFlow.authenticated,
         isError: false,
       ),
+    );
+  }
+
+  Future<void> logout() async {
+    state = state.copyWith(isLoading: true);
+
+    final result = await _logoutUseCase.execute();
+
+    result.fold(
+      (failure) => state = state.copyWith(
+        isLoading: false,
+        message: failure.error,
+        isError: true,
+      ),
+      (success) {
+        state = AuthState.initial().copyWith(flow: AuthFlow.unauthenticated);
+      },
     );
   }
 

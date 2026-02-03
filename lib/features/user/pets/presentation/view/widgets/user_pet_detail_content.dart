@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pet_connect/config/themes/app_colors.dart';
 import 'package:pet_connect/config/themes/app_styles.dart';
+import 'package:pet_connect/features/user/adoption/domain/entity/adoption_entity.dart';
+import 'package:pet_connect/features/user/adoption/presentation/state/adoption_state.dart';
+import 'package:pet_connect/features/user/adoption/presentation/viewmodel/adoption_viewmodel.dart';
+import 'package:pet_connect/features/user/payment/presentation/state/payment_state.dart';
+import 'package:pet_connect/features/user/payment/presentation/view/screens/payment_screen.dart';
+import 'package:pet_connect/features/user/payment/presentation/view/screens/wallet_screen.dart';
+import 'package:pet_connect/features/user/payment/presentation/viewmodel/payment_viewmodel.dart';
 import 'package:pet_connect/features/user/pets/domain/entity/pet_entity.dart';
 import 'package:pet_connect/features/user/pets/presentation/view/widgets/user_pet_detail_card.dart';
 
@@ -9,7 +17,7 @@ import 'user_pet_image_carousel.dart';
 import 'user_pet_info_chips.dart';
 import 'user_pet_section_title.dart';
 
-class UserPetDetailContent extends StatelessWidget {
+class UserPetDetailContent extends ConsumerStatefulWidget {
   final UserPetEntity pet;
   final PageController pageController;
   final int currentPage;
@@ -23,7 +31,6 @@ class UserPetDetailContent extends StatelessWidget {
     required this.onPageChanged,
   });
 
-  // Helper method to get status display text
   String _getStatusText(String status) {
     switch (status.toLowerCase()) {
       case 'available':
@@ -37,7 +44,6 @@ class UserPetDetailContent extends StatelessWidget {
     }
   }
 
-  // Helper method to get status color
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'available':
@@ -51,7 +57,6 @@ class UserPetDetailContent extends StatelessWidget {
     }
   }
 
-  // Helper method to format date
   String _formatDate(DateTime date) {
     final months = [
       'Jan',
@@ -70,18 +75,57 @@ class UserPetDetailContent extends StatelessWidget {
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 
-  // Helper method to check if pet is available for adoption
   bool _isAvailableForAdoption() {
     return pet.status.toLowerCase() == 'available';
   }
 
-  // Helper method to check if pet is booked (pending payment)
   bool _isBookedForPayment() {
     return pet.status.toLowerCase() == 'booked';
   }
 
   @override
+  ConsumerState<UserPetDetailContent> createState() =>
+      _UserPetDetailContentState();
+}
+
+class _UserPetDetailContentState extends ConsumerState<UserPetDetailContent> {
+  @override
+  void initState() {
+    super.initState();
+    if (widget.pet.status.toLowerCase() == 'booked') {
+      Future.delayed(Duration.zero, () {
+        ref
+            .read(userAdoptionViewModelProvider.notifier)
+            .getAdoptionStatus(widget.pet.id);
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final adoptionState = ref.watch(userAdoptionViewModelProvider);
+    final currentAdoption = adoptionState.currentAdoption;
+
+    ref.listen<PaymentState>(paymentViewModelProvider, (previous, next) {
+      if (next.paymentProcessingStatus == PaymentProcessingStatus.success) {
+        final id = next.currentPayment?.id;
+        if (id != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => PaymentScreen(paymentId: id)),
+          );
+          ref
+              .read(paymentViewModelProvider.notifier)
+              .clearPaymentProcessingStatus();
+        }
+      } else if (next.paymentProcessingStatus ==
+          PaymentProcessingStatus.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(next.paymentMessage ?? 'Payment Failed')),
+        );
+      }
+    });
+
     return Stack(
       children: [
         CustomScrollView(
@@ -91,10 +135,10 @@ class UserPetDetailContent extends StatelessWidget {
               expandedHeight: MediaQuery.of(context).size.height * 0.4,
               flexibleSpace: FlexibleSpaceBar(
                 background: UserPetImageCarousel(
-                  pet: pet,
-                  pageController: pageController,
-                  currentPage: currentPage,
-                  onPageChanged: onPageChanged,
+                  pet: widget.pet,
+                  pageController: widget.pageController,
+                  currentPage: widget.currentPage,
+                  onPageChanged: widget.onPageChanged,
                 ),
               ),
               pinned: true,
@@ -136,7 +180,6 @@ class UserPetDetailContent extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Pet name and basic info
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -144,8 +187,7 @@ class UserPetDetailContent extends StatelessWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Status badge (if not available)
-                                  if (!_isAvailableForAdoption())
+                                  if (!widget._isAvailableForAdoption())
                                     Container(
                                       margin: const EdgeInsets.only(bottom: 12),
                                       padding: const EdgeInsets.symmetric(
@@ -153,28 +195,32 @@ class UserPetDetailContent extends StatelessWidget {
                                         vertical: 6,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: _getStatusColor(
-                                          pet.status,
-                                        ).withOpacity(0.1),
+                                        color: widget
+                                            ._getStatusColor(widget.pet.status)
+                                            .withOpacity(0.1),
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
-                                          color: _getStatusColor(
-                                            pet.status,
-                                          ).withOpacity(0.3),
+                                          color: widget
+                                              ._getStatusColor(
+                                                widget.pet.status,
+                                              )
+                                              .withOpacity(0.3),
                                           width: 1,
                                         ),
                                       ),
                                       child: Text(
-                                        _getStatusText(pet.status),
+                                        widget._getStatusText(
+                                          widget.pet.status,
+                                        ),
                                         style: AppStyles.small.copyWith(
                                           fontWeight: FontWeight.w600,
-                                          color: _getStatusColor(pet.status),
+                                          color: widget._getStatusColor(
+                                            widget.pet.status,
+                                          ),
                                           fontSize: 12,
                                         ),
                                       ),
                                     ),
-
-                                  // Breed badge
                                   Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 12,
@@ -191,7 +237,7 @@ class UserPetDetailContent extends StatelessWidget {
                                       ),
                                     ),
                                     child: Text(
-                                      pet.breed,
+                                      widget.pet.breed,
                                       style: AppStyles.small.copyWith(
                                         fontWeight: FontWeight.w600,
                                         color: AppColors.primaryOrange,
@@ -200,10 +246,8 @@ class UserPetDetailContent extends StatelessWidget {
                                     ),
                                   ),
                                   const SizedBox(height: 12),
-
-                                  // Pet name
                                   Text(
-                                    pet.name,
+                                    widget.pet.name,
                                     style: AppStyles.headline1.copyWith(
                                       fontSize: 32,
                                       fontWeight: FontWeight.w700,
@@ -212,20 +256,15 @@ class UserPetDetailContent extends StatelessWidget {
                                     ),
                                   ),
                                   const SizedBox(height: 16),
-
-                                  // Info chips
-                                  UserPetInfoChips(pet: pet),
+                                  UserPetInfoChips(pet: widget.pet),
                                 ],
                               ),
                             ),
                           ],
                         ),
-
                         const SizedBox(height: 32),
-
-                        // About section
-                        if (pet.description != null &&
-                            pet.description!.isNotEmpty) ...[
+                        if (widget.pet.description != null &&
+                            widget.pet.description!.isNotEmpty) ...[
                           const UserPetSectionTitle(title: 'About'),
                           const SizedBox(height: 12),
                           Container(
@@ -238,7 +277,7 @@ class UserPetDetailContent extends StatelessWidget {
                               ),
                             ),
                             child: Text(
-                              pet.description!,
+                              widget.pet.description!,
                               style: AppStyles.body.copyWith(
                                 color: AppColors.textDarkGrey,
                                 height: 1.6,
@@ -247,16 +286,14 @@ class UserPetDetailContent extends StatelessWidget {
                           ),
                           const SizedBox(height: 24),
                         ],
-
-                        // Personality section
-                        if (pet.personality != null &&
-                            pet.personality!.isNotEmpty) ...[
+                        if (widget.pet.personality != null &&
+                            widget.pet.personality!.isNotEmpty) ...[
                           const UserPetSectionTitle(title: 'Personality'),
                           const SizedBox(height: 12),
                           Wrap(
                             spacing: 10,
                             runSpacing: 10,
-                            children: pet.personality!
+                            children: widget.pet.personality!
                                 .split(',')
                                 .map(
                                   (trait) => Container(
@@ -298,10 +335,8 @@ class UserPetDetailContent extends StatelessWidget {
                           ),
                           const SizedBox(height: 24),
                         ],
-
-                        // Medical Information section
-                        if (pet.medicalInfo != null &&
-                            pet.medicalInfo!.isNotEmpty) ...[
+                        if (widget.pet.medicalInfo != null &&
+                            widget.pet.medicalInfo!.isNotEmpty) ...[
                           const UserPetSectionTitle(
                             title: 'Medical Information',
                           ),
@@ -333,7 +368,7 @@ class UserPetDetailContent extends StatelessWidget {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
-                                    pet.medicalInfo!,
+                                    widget.pet.medicalInfo!,
                                     style: AppStyles.body.copyWith(
                                       color: AppColors.textDarkGrey,
                                       height: 1.6,
@@ -345,11 +380,8 @@ class UserPetDetailContent extends StatelessWidget {
                           ),
                           const SizedBox(height: 24),
                         ],
-
-                        // Details section
                         const UserPetSectionTitle(title: 'Details'),
                         const SizedBox(height: 16),
-
                         GridView.count(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
@@ -361,22 +393,26 @@ class UserPetDetailContent extends StatelessWidget {
                             UserPetDetailCard(
                               icon: Icons.calendar_today,
                               title: 'Listed On',
-                              value: pet.createdAt != null
-                                  ? _formatDate(pet.createdAt!)
+                              value: widget.pet.createdAt != null
+                                  ? widget._formatDate(widget.pet.createdAt!)
                                   : 'N/A',
                               color: Colors.purple,
                             ),
                             UserPetDetailCard(
                               icon: Icons.public,
                               title: 'Status',
-                              value: _getStatusText(pet.status),
-                              color: _getStatusColor(pet.status),
+                              value: widget._getStatusText(widget.pet.status),
+                              color: widget._getStatusColor(widget.pet.status),
+                            ),
+                            UserPetDetailCard(
+                              icon: Icons.attach_money,
+                              title: 'Amount',
+                              value: 'Rs. ${_getAdoptionFee(widget.pet)}',
+                              color: Colors.green,
                             ),
                           ],
                         ),
-
-                        // Payment Information (if booked)
-                        if (_isBookedForPayment()) ...[
+                        if (widget._isBookedForPayment()) ...[
                           const SizedBox(height: 24),
                           Container(
                             padding: const EdgeInsets.all(16),
@@ -442,7 +478,7 @@ class UserPetDetailContent extends StatelessWidget {
                                         ),
                                       ),
                                       Text(
-                                        'Rs. ${_getAdoptionFee(pet)}',
+                                        'Rs. ${_getAdoptionFee(widget.pet)}',
                                         style: AppStyles.headline3.copyWith(
                                           color: AppColors.primaryOrange,
                                           fontSize: 18,
@@ -456,29 +492,29 @@ class UserPetDetailContent extends StatelessWidget {
                             ),
                           ),
                         ],
-
-                        // Adoption Status Info (if not available)
-                        if (!_isAvailableForAdoption()) ...[
+                        if (!widget._isAvailableForAdoption()) ...[
                           const SizedBox(height: 24),
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: _getStatusColor(
-                                pet.status,
-                              ).withOpacity(0.05),
+                              color: widget
+                                  ._getStatusColor(widget.pet.status)
+                                  .withOpacity(0.05),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: _getStatusColor(
-                                  pet.status,
-                                ).withOpacity(0.2),
+                                color: widget
+                                    ._getStatusColor(widget.pet.status)
+                                    .withOpacity(0.2),
                                 width: 1.5,
                               ),
                             ),
                             child: Row(
                               children: [
                                 Icon(
-                                  _getStatusIcon(pet.status),
-                                  color: _getStatusColor(pet.status),
+                                  _getStatusIcon(widget.pet.status),
+                                  color: widget._getStatusColor(
+                                    widget.pet.status,
+                                  ),
                                   size: 24,
                                 ),
                                 const SizedBox(width: 12),
@@ -488,16 +524,18 @@ class UserPetDetailContent extends StatelessWidget {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        _getStatusTitle(pet.status),
+                                        _getStatusTitle(widget.pet.status),
                                         style: AppStyles.body.copyWith(
                                           fontWeight: FontWeight.w700,
-                                          color: _getStatusColor(pet.status),
+                                          color: widget._getStatusColor(
+                                            widget.pet.status,
+                                          ),
                                           fontSize: 16,
                                         ),
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        _getStatusMessage(pet.status),
+                                        _getStatusMessage(widget.pet.status),
                                         style: AppStyles.small.copyWith(
                                           color: AppColors.textDarkGrey
                                               .withOpacity(0.8),
@@ -511,7 +549,6 @@ class UserPetDetailContent extends StatelessWidget {
                             ),
                           ),
                         ],
-
                         const SizedBox(height: 100),
                       ],
                     ),
@@ -521,18 +558,49 @@ class UserPetDetailContent extends StatelessWidget {
             ),
           ],
         ),
-        // Show different bottom buttons based on status
-        _buildBottomButton(context),
+        _buildBottomButton(context, ref, currentAdoption, adoptionState),
       ],
     );
   }
 
-  Widget _buildBottomButton(BuildContext context) {
-    switch (pet.status.toLowerCase()) {
+  Widget _buildBottomButton(
+    BuildContext context,
+    WidgetRef ref,
+    UserAdoptionEntity? currentAdoption,
+    UserAdoptionState adoptionState,
+  ) {
+    switch (widget.pet.status.toLowerCase()) {
       case 'available':
-        return UserPetAdoptButton(pet: pet);
+        return UserPetAdoptButton(pet: widget.pet);
       case 'booked':
-        return _buildPaymentButton(context);
+        if (adoptionState.isLoading) {
+          return Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: 100,
+              alignment: Alignment.center,
+              child: const CircularProgressIndicator(),
+            ),
+          );
+        }
+        if (adoptionState.status == UserAdoptionStatus.error) {
+          return Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: 100,
+              alignment: Alignment.center,
+              child: Text(
+                adoptionState.message ?? 'Failed to load adoption details.',
+                style: AppStyles.body.copyWith(color: AppColors.errorRed),
+              ),
+            ),
+          );
+        }
+        return _buildPaymentButton(context, ref, currentAdoption);
       case 'adopted':
         return _buildAdoptedInfo();
       default:
@@ -540,7 +608,12 @@ class UserPetDetailContent extends StatelessWidget {
     }
   }
 
-  Widget _buildPaymentButton(BuildContext context) {
+  Widget _buildPaymentButton(
+    BuildContext context,
+    WidgetRef ref,
+    UserAdoptionEntity? currentAdoption,
+  ) {
+    final isEnabled = currentAdoption != null;
     return Positioned(
       bottom: 0,
       left: 0,
@@ -573,12 +646,13 @@ class UserPetDetailContent extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: ElevatedButton(
-            onPressed: () {
-              // Navigate to payment screen
-              _navigateToPayment(context);
-            },
+            onPressed: isEnabled
+                ? () => _navigateToPayment(ref, currentAdoption)
+                : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.successGreen,
+              backgroundColor: isEnabled
+                  ? AppColors.successGreen
+                  : AppColors.textLightGrey,
               foregroundColor: Colors.white,
               elevation: 4,
               shape: RoundedRectangleBorder(
@@ -592,7 +666,7 @@ class UserPetDetailContent extends StatelessWidget {
                 const Icon(Icons.payment, size: 22),
                 const SizedBox(width: 12),
                 Text(
-                  'Pay Rs. ${_getAdoptionFee(pet)}',
+                  'Pay Rs. ${_getAdoptionFee(widget.pet)}',
                   style: AppStyles.button.copyWith(
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
@@ -670,38 +744,205 @@ class UserPetDetailContent extends StatelessWidget {
     );
   }
 
-  void _navigateToPayment(BuildContext context) {
-    // Navigate to payment screen
-    // You'll need to implement this based on your payment flow
-    /*
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PaymentScreen(
-          petId: pet.id,
-          petName: pet.name,
-          amount: _getAdoptionFee(pet),
+  void _navigateToPayment(WidgetRef ref, UserAdoptionEntity? currentAdoption) {
+    final businessId = widget.pet.businessId;
+    final adoptionId = currentAdoption?.id;
+
+    if (businessId.isEmpty || adoptionId == null || adoptionId.isEmpty) {
+      debugPrint("❌ Payment Blocked: Missing IDs");
+      debugPrint("Pet BusinessId: $businessId");
+      debugPrint("Adoption Id: $adoptionId");
+
+      ScaffoldMessenger.of(ref.context).showSnackBar(
+        const SnackBar(
+          content: Text('Error: Could not retrieve required ID information.'),
         ),
-      ),
-    );
-    */
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Navigate to payment for ${pet.name}'),
-        backgroundColor: AppColors.successGreen,
-      ),
+      );
+      return;
+    }
+
+    // Check wallet first
+    _checkWalletAndProceed(context, ref, currentAdoption!);
+  }
+
+  Future<void> _checkWalletAndProceed(
+    BuildContext context,
+    WidgetRef ref,
+    UserAdoptionEntity currentAdoption,
+  ) async {
+    final amount = widget.pet.amount.toDouble();
+
+    // Check wallet status first
+    final paymentState = ref.read(paymentViewModelProvider);
+
+    if (paymentState.walletStatus == WalletStatus.error) {
+      _showWalletNotFoundDialog(context);
+      return;
+    }
+
+    // Get wallet balance if not already loaded
+    if (paymentState.walletStatus != WalletStatus.loaded) {
+      await ref.read(paymentViewModelProvider.notifier).loadWalletBalance();
+    }
+
+    final currentBalance = ref.read(paymentViewModelProvider).walletBalance;
+    final requiredAmount = widget.pet.amount.toDouble();
+
+    if (currentBalance < requiredAmount) {
+      _showInsufficientFundsDialog(context, currentBalance, requiredAmount);
+      return;
+    }
+
+    // Wallet exists and has enough funds - proceed with payment
+    ref
+        .read(paymentViewModelProvider.notifier)
+        .initiatePayment(
+          petId: widget.pet.id,
+          amount: requiredAmount,
+          adoptionId: currentAdoption.id!,
+          businessId: widget.pet.businessId,
+          checkWalletFirst: false, // Already checked
+        );
+  }
+
+  void _showWalletNotFoundDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: AppColors.primaryWhite,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text(
+            'Wallet Required',
+            style: AppStyles.headline3.copyWith(color: AppColors.textBlack),
+          ),
+          content: Text(
+            'You need to set up a wallet before making payments. '
+            'Would you like to create a wallet now?',
+            style: AppStyles.body.copyWith(color: AppColors.textGrey),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Not Now',
+                style: AppStyles.body.copyWith(color: AppColors.textLightGrey),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryOrange,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const WalletScreen()),
+                );
+              },
+              child: Text('Setup Wallet', style: AppStyles.button),
+            ),
+          ],
+        );
+      },
     );
   }
 
-  // Helper method to get adoption fee
-  // Note: You'll need to add an 'amount' field to your UserPetEntity
-  // or get it from another source (like adoption record)
-  String _getAdoptionFee(UserPetEntity pet) {
-    // If your UserPetEntity has amount field:
-    // return pet.amount?.toStringAsFixed(0) ?? '0';
+  void _showInsufficientFundsDialog(
+    BuildContext context,
+    double currentBalance,
+    double requiredAmount,
+  ) {
+    final shortfall = requiredAmount - currentBalance;
 
-    // Temporary placeholder - update based on your data structure
-    return '20000'; // Example amount
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: AppColors.primaryWhite,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text(
+            'Insufficient Funds',
+            style: AppStyles.headline3.copyWith(color: AppColors.textBlack),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'You have Rs. $currentBalance in your wallet, '
+                'but need Rs. $requiredAmount for this adoption.\n\n'
+                'You are short by Rs. $shortfall.',
+                style: AppStyles.body.copyWith(color: AppColors.textGrey),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Required Amount:',
+                      style: AppStyles.body.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      'Rs. $requiredAmount',
+                      style: AppStyles.headline3.copyWith(
+                        color: AppColors.primaryOrange,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Cancel',
+                style: AppStyles.body.copyWith(color: AppColors.textLightGrey),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryOrange,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const WalletScreen()),
+                );
+              },
+              child: Text('Add Funds', style: AppStyles.button),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  String _getAdoptionFee(UserPetEntity pet) {
+    return pet.amount.toString();
   }
 
   IconData _getStatusIcon(String status) {

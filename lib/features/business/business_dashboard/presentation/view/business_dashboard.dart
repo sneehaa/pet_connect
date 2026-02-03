@@ -356,9 +356,6 @@ class _BusinessDashboardScreenState
   Widget _buildHomePage() {
     return Consumer(
       builder: (context, ref, _) {
-        final notificationState = ref.watch(notificationViewModelProvider);
-        final unreadCount = notificationState.unreadCount;
-
         return SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
           child: Center(
@@ -407,82 +404,6 @@ class _BusinessDashboardScreenState
                     ),
                   ),
                 ),
-
-                // Notification Quick Stats
-                if (unreadCount > 0)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 30, bottom: 20),
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const BusinessNotificationsScreen(),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryOrange.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: AppColors.primaryOrange.withOpacity(0.3),
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primaryOrange,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Center(
-                                    child: Icon(
-                                      Icons.notifications,
-                                      color: Colors.white,
-                                      size: 20,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      '$unreadCount New Notification${unreadCount > 1 ? 's' : ''}',
-                                      style: AppStyles.body.copyWith(
-                                        fontWeight: FontWeight.w600,
-                                        color: _textDeepDark,
-                                      ),
-                                    ),
-                                    Text(
-                                      'Tap to view',
-                                      style: AppStyles.small.copyWith(
-                                        color: AppColors.textLightGrey,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            const Icon(
-                              Icons.arrow_forward_ios,
-                              color: AppColors.primaryOrange,
-                              size: 16,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
 
                 const SizedBox(height: 40),
                 ElevatedButton(

@@ -17,7 +17,7 @@ class UserAdoptionModel extends UserAdoptionEntity {
 
   factory UserAdoptionModel.fromJson(Map<String, dynamic> json) {
     return UserAdoptionModel(
-      id: json['_id'],
+      id: json['_id']?.toString(),
       petId: json['petId'],
       userId: json['userId'],
       businessId: json['businessId'],
