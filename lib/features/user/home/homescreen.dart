@@ -8,6 +8,7 @@ import 'package:pet_connect/features/user/auth/presentation/auth_viewmodel/auth_
 import 'package:pet_connect/features/user/businesses/presentation/view/business_detail_screen.dart';
 import 'package:pet_connect/features/user/businesses/presentation/view/widget/business_card.dart';
 import 'package:pet_connect/features/user/businesses/presentation/viewmodel/business_viewmodel.dart';
+import 'package:pet_connect/features/user/compatibility/presentation/view/screens/compatibility_home_page.dart';
 import 'package:pet_connect/features/user/home/widgets/custom_appbar.dart';
 import 'package:pet_connect/features/user/payment/presentation/view/screens/wallet_screen.dart';
 import 'package:pet_connect/features/user/profile/presentation/view/profile_screen.dart';
@@ -169,7 +170,7 @@ class _HomescreenState extends ConsumerState<Homescreen> {
       case 1:
         return _buildFavoritesPage();
       case 2:
-        return _buildCompatibilityPage();
+        return const CompatibilityHomePage();
       case 3:
         return const ProfileScreen();
       default:
@@ -232,15 +233,6 @@ class _HomescreenState extends ConsumerState<Homescreen> {
       'assets/icons/favorite.png',
       'Your Favorites',
       'Save your favorite pets and businesses to easily find them later.',
-    );
-  }
-
-  Widget _buildCompatibilityPage() {
-    return _buildPlaceholderPage(
-      'assets/icons/compatibility.png',
-      'Pet Compatibility',
-      'Find the perfect pet match based on your lifestyle and preferences.',
-      showButton: true,
     );
   }
 
