@@ -83,7 +83,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                           ),
                         ),
                       ),
+                      const SizedBox(height: 20),
                       Text('Create your Account', style: AppStyles.headline2),
+                      const SizedBox(height: 10),
                       Text(
                         'Please enter your details',
                         style: AppStyles.subtitle,
@@ -100,7 +102,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               validator: (v) =>
                                   v!.isEmpty ? 'Enter full name' : null,
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 20),
                             _buildTextField(
                               controller: _usernameController,
                               label: 'Username',
@@ -108,7 +110,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               validator: (v) =>
                                   v!.isEmpty ? 'Enter username' : null,
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 20),
                             _buildTextField(
                               controller: _emailController,
                               label: 'Email',
@@ -117,7 +119,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               validator: (v) =>
                                   !v!.contains('@') ? 'Invalid email' : null,
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 20),
                             TextFormField(
                               controller: _passwordController,
                               obscureText: obscurePassword,
@@ -143,10 +145,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                               !obscurePassword,
                                     ),
                                   ),
+                              style: AppStyles.body,
                               validator: (v) =>
                                   v!.length < 6 ? 'Min 6 characters' : null,
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 20),
                             _buildTextField(
                               controller: _phoneNumberController,
                               label: 'Phone Number',
@@ -155,7 +158,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               validator: (v) =>
                                   v!.isEmpty ? 'Enter phone number' : null,
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 20),
                             _buildTextField(
                               controller: _addressController,
                               label: 'Address',
@@ -170,6 +173,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                     onPressed: _handleSignup,
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: AppColors.primaryOrange,
+                                      foregroundColor: AppColors.primaryWhite,
                                       minimumSize: const Size(230, 50),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
@@ -177,8 +181,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                     ),
                                     child: Text(
                                       "Signup",
-                                      style: AppStyles.headline3.copyWith(
-                                        color: AppColors.primaryWhite,
+                                      style: AppStyles.button.copyWith(
+                                        fontSize: 22,
                                       ),
                                     ),
                                   ),
@@ -205,6 +209,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                     style: AppStyles.linkText.copyWith(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
+                                      color: AppColors.primaryBlue,
                                     ),
                                   ),
                                 ),
@@ -252,6 +257,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       controller: controller,
       keyboardType: keyboardType,
       decoration: _inputDecoration(label: label, iconPath: iconPath),
+      style: AppStyles.body,
       validator: validator,
     );
   }
@@ -265,6 +271,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       fillColor: AppColors.backgroundGrey.withOpacity(0.45),
       labelText: label,
       labelStyle: AppStyles.inputLabel,
+      hintStyle: AppStyles.inputLabel,
       prefixIcon: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Image.asset(iconPath, width: 24, height: 24),
@@ -272,6 +279,14 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.primaryOrange, width: 2),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
     );

@@ -80,7 +80,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                         ),
                       ),
+                      const SizedBox(height: 20),
                       Text('Welcome Back', style: AppStyles.headline2),
+                      const SizedBox(height: 10),
                       Text(
                         'Please enter your details',
                         style: AppStyles.subtitle,
@@ -98,11 +100,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 label: 'Email',
                                 iconPath: 'assets/icons/email.png',
                               ),
+                              style: AppStyles.body,
                               validator: (value) {
-                                if (value == null || value.isEmpty)
+                                if (value == null || value.isEmpty) {
                                   return 'Please enter email';
-                                if (!value.contains('@'))
+                                }
+                                if (!value.contains('@')) {
                                   return 'Invalid email format';
+                                }
                                 return null;
                               },
                             ),
@@ -134,9 +139,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                               !obscurePassword,
                                     ),
                                   ),
+                              style: AppStyles.body,
                               validator: (value) {
-                                if (value == null || value.isEmpty)
+                                if (value == null || value.isEmpty) {
                                   return 'Please enter password';
+                                }
                                 return null;
                               },
                             ),
@@ -151,6 +158,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   'Forgot password?',
                                   style: AppStyles.linkText.copyWith(
                                     fontSize: 16,
+                                    color: AppColors.primaryBlue,
                                   ),
                                 ),
                               ),
@@ -177,6 +185,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: AppColors.primaryOrange,
+                                      foregroundColor: AppColors.primaryWhite,
                                       minimumSize: const Size(230, 50),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
@@ -214,6 +223,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     style: AppStyles.linkText.copyWith(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
+                                      color: AppColors.primaryBlue,
                                     ),
                                   ),
                                 ),
@@ -242,7 +252,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       filled: true,
       fillColor: AppColors.backgroundGrey.withOpacity(0.45),
       labelText: label,
-      labelStyle: AppStyles.subtitle.copyWith(fontSize: 18),
+      labelStyle: AppStyles.inputLabel,
+      hintStyle: AppStyles.inputLabel,
       prefixIcon: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Image.asset(iconPath, width: 24, height: 24),
@@ -250,6 +261,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.primaryOrange, width: 2),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
     );

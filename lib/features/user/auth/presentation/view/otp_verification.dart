@@ -76,6 +76,7 @@ class _UserOtpVerificationScreenState
                   style: AppStyles.headline3.copyWith(
                     letterSpacing: 25,
                     fontSize: 32,
+                    color: AppColors.textBlack,
                   ),
                   decoration: InputDecoration(
                     counterText: "",
@@ -84,9 +85,13 @@ class _UserOtpVerificationScreenState
                     hintText: "0000",
                     hintStyle: AppStyles.subtitle.copyWith(
                       letterSpacing: 25,
-                      color: Colors.grey.withOpacity(0.3),
+                      color: AppColors.textLightGrey.withOpacity(0.5),
                     ),
                     border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
@@ -118,6 +123,7 @@ class _UserOtpVerificationScreenState
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryOrange,
+                          foregroundColor: AppColors.primaryWhite,
                           minimumSize: const Size(double.infinity, 55),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -136,7 +142,8 @@ class _UserOtpVerificationScreenState
                   child: Text(
                     "Resend Code",
                     style: AppStyles.linkText.copyWith(
-                      color: AppColors.primaryOrange,
+                      color: AppColors.primaryBlue,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
