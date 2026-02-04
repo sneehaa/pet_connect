@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:pet_connect/config/themes/app_colors.dart';
@@ -27,117 +28,124 @@ class _BusinessPaymentDetailScreenState
         : 'Pending';
 
     return Scaffold(
-      backgroundColor: AppColors.primaryWhite, // Clean white background
+      backgroundColor: const Color(0xFFF8F9FB),
       appBar: AppBar(
-        backgroundColor: AppColors.primaryWhite,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(
-            Icons.close,
+            Icons.arrow_back_ios_new,
             color: AppColors.textBlack,
-          ), // "Close" feels better for detail modals
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Transaction Detail', style: AppStyles.headline3),
+        title: Text('Payment detail', style: AppStyles.headline3),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            const SizedBox(height: 20),
-            // --- SECTION 1: TOP SUMMARY ---
-            _buildCompactHeader(payment),
-            const SizedBox(height: 32),
-
-            // --- SECTION 2: TRANSACTION DETAILS ---
-            _buildSectionTitle('Payment Information'),
-            const SizedBox(height: 12),
-            _buildDetailRow('Customer', payment.userName ?? 'Unknown User'),
-            _buildDetailRow('Pet Name', payment.petName ?? 'N/A'),
-            _buildDetailRow('Adoption ID', '#${payment.adoptionId}'),
-            _buildDetailRow('Transaction ID', payment.transactionId ?? 'N/A'),
-
-            const Divider(
-              height: 40,
-              thickness: 1,
-              color: AppColors.background,
+            _buildMainHeader(payment),
+            const SizedBox(height: 24),
+            _buildInfoCard(
+              title: 'Transaction Details',
+              children: [
+                _buildModernRow(
+                  Icons.person_outline,
+                  'Customer',
+                  payment.userName ?? 'Unknown',
+                ),
+                _buildModernRow(
+                  Icons.pets_outlined,
+                  'Pet Name',
+                  payment.petName ?? 'N/A',
+                ),
+                _buildModernRow(
+                  Icons.fingerprint,
+                  'Adoption ID',
+                  '#${payment.adoptionId}',
+                ),
+                _buildModernRow(
+                  Icons.receipt_long_outlined,
+                  'Reference',
+                  payment.transactionId ?? 'N/A',
+                  showCopy: true,
+                ),
+              ],
             ),
-
-            // --- SECTION 3: DATES ---
-            _buildSectionTitle('Timeline'),
-            const SizedBox(height: 12),
-            _buildDetailRow('Initiated', initiatedDate),
-            _buildDetailRow('Completed', completedDate),
-
-            const SizedBox(height: 40),
-            if (payment.status == 'pending') _buildActionButtons(payment),
+            const SizedBox(height: 16),
+            _buildInfoCard(
+              title: 'Timeline',
+              children: [
+                _buildModernRow(
+                  Icons.calendar_today_outlined,
+                  'Initiated',
+                  initiatedDate,
+                ),
+                _buildModernRow(
+                  Icons.check_circle_outline,
+                  'Completed',
+                  completedDate,
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildCompactHeader(PaymentModel payment) {
-    return Column(
-      children: [
-        Text(
-          'Rs. ${payment.amount.toStringAsFixed(2)}',
-          style: AppStyles.headline1.copyWith(
-            fontSize: 40,
-            color: AppColors.textBlack,
+  Widget _buildMainHeader(PaymentModel payment) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 30),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(
-            color: _getStatusColor(payment.status).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            payment.statusText.toUpperCase(),
-            style: AppStyles.small.copyWith(
+        ],
+      ),
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 30,
+            backgroundColor: _getStatusColor(payment.status).withOpacity(0.1),
+            child: Icon(
+              _getStatusIcon(payment.status),
               color: _getStatusColor(payment.status),
-              fontWeight: FontWeight.bold,
+              size: 30,
             ),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        title,
-        style: AppStyles.body.copyWith(
-          color: AppColors.textLightGrey,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 0.5,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
+          const SizedBox(height: 16),
           Text(
-            label,
-            style: AppStyles.body.copyWith(color: AppColors.textLightGrey),
+            'Rs. ${payment.amount.toStringAsFixed(2)}',
+            style: AppStyles.headline1.copyWith(
+              fontSize: 32,
+              fontWeight: FontWeight.w800,
+            ),
           ),
-          Flexible(
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            decoration: BoxDecoration(
+              color: _getStatusColor(payment.status).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
             child: Text(
-              value,
-              textAlign: TextAlign.right,
-              style: AppStyles.body.copyWith(
-                color: AppColors.textBlack,
-                fontWeight: FontWeight.w600,
+              payment.statusText.toUpperCase(),
+              style: AppStyles.small.copyWith(
+                color: _getStatusColor(payment.status),
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.0,
               ),
             ),
           ),
@@ -146,48 +154,128 @@ class _BusinessPaymentDetailScreenState
     );
   }
 
-  Color _getStatusColor(String status) {
+  Widget _buildInfoCard({
+    required String title,
+    required List<Widget> children,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: AppStyles.body.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppColors.textLightGrey,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModernRow(
+    IconData icon,
+    String label,
+    String value, {
+    bool showCopy = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Icon(
+              icon,
+              size: 18,
+              color: AppColors.textLightGrey.withOpacity(0.6),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            label,
+            style: AppStyles.body.copyWith(color: AppColors.textLightGrey),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        value,
+                        textAlign: TextAlign.right,
+                        style: AppStyles.body.copyWith(
+                          fontWeight: FontWeight.w600,
+                          height: 1.3,
+                        ),
+                        softWrap: true,
+                      ),
+                    ),
+                    if (showCopy)
+                      GestureDetector(
+                        onTap: () {
+                          Clipboard.setData(ClipboardData(text: value));
+                          HapticFeedback.mediumImpact();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Copied to clipboard'),
+                              duration: Duration(seconds: 1),
+                            ),
+                          );
+                        },
+                        child: const Padding(
+                          padding: EdgeInsets.only(left: 6.0, top: 2),
+                          child: Icon(
+                            Icons.copy,
+                            size: 14,
+                            color: AppColors.primaryOrange,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  IconData _getStatusIcon(String status) {
     switch (status) {
       case 'completed':
-        return AppColors.successGreen;
+        return Icons.verified_rounded;
       case 'failed':
-        return AppColors.errorRed;
+        return Icons.error_rounded;
       default:
-        return AppColors.primaryOrange;
+        return Icons.pending_rounded;
     }
   }
 
-  Widget _buildActionButtons(PaymentModel payment) {
-    return Column(
-      children: [
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.textBlack,
-              padding: const EdgeInsets.all(18),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-            child: const Text(
-              'Confirm Receipt',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ),
-        TextButton(
-          onPressed: () {},
-          child: Text(
-            'Issue Refund',
-            style: TextStyle(color: AppColors.errorRed),
-          ),
-        ),
-      ],
-    );
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'completed':
+        return const Color(0xFF27AE60);
+      case 'failed':
+        return const Color(0xFFEB5757);
+      default:
+        return const Color(0xFFF2994A);
+    }
   }
 }

@@ -16,7 +16,7 @@ class BusinessPaymentState {
   final BusinessEarningsResponseEntity? earnings;
   final double businessWalletBalance;
   final Map<String, dynamic>? businessTransactions;
-  final List<TransactionEntity> recentTransactions;
+  final List<BusinessTransactionEntity> recentTransactions;
 
   final String? earningsMessage;
   final String? walletMessage;
@@ -78,7 +78,6 @@ class BusinessPaymentState {
       businessWalletBalance:
           businessWalletBalance ?? this.businessWalletBalance,
       businessTransactions: businessTransactions ?? this.businessTransactions,
-      recentTransactions: recentTransactions ?? this.recentTransactions,
 
       earningsMessage: earningsMessage ?? this.earningsMessage,
       walletMessage: walletMessage ?? this.walletMessage,

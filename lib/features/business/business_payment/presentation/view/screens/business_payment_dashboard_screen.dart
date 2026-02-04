@@ -62,7 +62,7 @@ class _BusinessPaymentDashboardScreenState
               flexibleSpace: FlexibleSpaceBar(
                 titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
                 title: Text(
-                  'Business Dashboard',
+                  'Payment Dashboard',
                   style: AppStyles.headline3.copyWith(
                     color: AppColors.textBlack,
                   ),
