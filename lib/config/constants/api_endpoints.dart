@@ -37,19 +37,33 @@ class ApiEndpoints {
       "${businessBaseUrl}update-profile";
 
   static String getBusinessDetails(String id) => "$businessBaseUrl/$id";
+
   // Pets service URL
-  static const String petsBaseUrl = "http://192.168.68.127:5502/api/pets/";
+  static const String petsBaseUrl = "http://192.168.68.127:5502/api/pets";
 
   // Public pet routes
   static String getPetsByBusiness(String businessId) =>
-      "${petsBaseUrl}business/$businessId";
-  static String getPetDetail(String petId) => "$petsBaseUrl$petId";
+      "$petsBaseUrl/business/$businessId";
+  static String getPetDetail(String petId) => "$petsBaseUrl/$petId";
   static String getAllPets() => petsBaseUrl;
 
   // Authenticated business pet routes
   static String createPet() => petsBaseUrl;
-  static String updatePet(String petId) => "$petsBaseUrl$petId";
-  static String deletePet(String petId) => "$petsBaseUrl$petId";
+  static String updatePet(String petId) => "$petsBaseUrl/$petId";
+  static String deletePet(String petId) => "$petsBaseUrl/$petId";
+
+  // Compatibility routes (these are relative to /api/pets)
+  static const String submitQuestionnaire =
+      '$petsBaseUrl/compatibility/questionnaire';
+  static const String getQuestionnaire =
+      '$petsBaseUrl/compatibility/questionnaire';
+  static const String deleteQuestionnaire =
+      '$petsBaseUrl/compatibility/questionnaire';
+  static const String getCompatibilityAll = '$petsBaseUrl/compatibility';
+
+  static String getCompatibilityWithPet(String petId) {
+    return '$petsBaseUrl/compatibility/$petId';
+  }
 
   // Adoption service URL
   static const String adoptionBaseUrl =
