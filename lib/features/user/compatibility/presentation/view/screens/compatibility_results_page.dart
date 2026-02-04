@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pet_connect/config/themes/app_colors.dart';
+import 'package:pet_connect/config/themes/app_styles.dart';
 import 'package:pet_connect/features/user/compatibility/presentation/state/compatibility_state.dart';
+import 'package:pet_connect/features/user/compatibility/presentation/view/screens/pet_compatibility_detail_page.dart';
+import 'package:pet_connect/features/user/compatibility/presentation/view/screens/questionnaire_page.dart';
 import 'package:pet_connect/features/user/compatibility/presentation/view/widgets/results/pet_compatibility_card.dart';
 import 'package:pet_connect/features/user/compatibility/presentation/viewmodel/compatibility_viewmodel.dart';
 
@@ -21,9 +25,11 @@ class _CompatibilityResultsPageState
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(compatibilityViewModelProvider.notifier).getCompatibilityAll();
-    });
+    Future.microtask(
+      () => ref
+          .read(compatibilityViewModelProvider.notifier)
+          .getCompatibilityAll(),
+    );
   }
 
   @override
@@ -34,91 +40,140 @@ class _CompatibilityResultsPageState
     return LoadingOverlay(
       isLoading: state.status == CompatibilityStatus.loading,
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Best Matches'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: () => viewModel.getCompatibilityAll(),
+        backgroundColor: AppColors.background,
+        body: Stack(
+          children: [
+            RefreshIndicator(
+              color: AppColors.primaryOrange,
+              onRefresh: () => viewModel.getCompatibilityAll(),
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [_buildContent(state, viewModel)],
+              ),
             ),
-            PopupMenuButton(
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'edit',
-                  child: ListTile(
-                    leading: Icon(Icons.edit),
-                    title: Text('Edit Questionnaire'),
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: ListTile(
-                    leading: Icon(Icons.delete),
-                    title: Text('Delete Questionnaire'),
-                  ),
-                ),
-              ],
-              onSelected: (value) {
-                if (value == 'edit') {
-                  Navigator.pushNamed(context, '/questionnaire');
-                } else if (value == 'delete') {
-                  _showDeleteDialog(context, viewModel);
-                }
-              },
-            ),
+            if (state.status == CompatibilityStatus.loaded &&
+                state.compatibilityResults.isNotEmpty)
+              Positioned(
+                bottom: 30,
+                left: 0,
+                right: 0,
+                child: _buildFloatingActions(viewModel),
+              ),
           ],
         ),
-        body: _buildBody(state, viewModel),
       ),
     );
   }
 
-  Widget _buildBody(
+  Widget _buildFloatingActions(CompatibilityViewModel viewModel) {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.textBlack.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(40),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _actionPill(
+              icon: Icons.edit_note_rounded,
+              label: 'Edit Info',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const QuestionnairePage(),
+                  ),
+                );
+              },
+            ),
+            Container(
+              height: 24,
+              width: 1,
+              color: Colors.white24,
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+            ),
+            _actionPill(
+              icon: Icons.refresh_rounded,
+              label: 'Reset',
+              onTap: () => _showDeleteDialog(context, viewModel),
+              isDestructive: true,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _actionPill({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    bool isDestructive = false,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(30),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                color: isDestructive ? AppColors.errorRed : Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: AppStyles.button.copyWith(
+                  color: isDestructive ? AppColors.errorRed : Colors.white,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContent(
     CompatibilityState state,
     CompatibilityViewModel viewModel,
   ) {
     if (state.status == CompatibilityStatus.error) {
-      return ErrorDisplay(
-        message: state.message ?? 'Failed to load results',
-        onRetry: () => viewModel.getCompatibilityAll(),
+      return SliverFillRemaining(
+        child: ErrorDisplay(
+          message: state.message ?? 'Failed to load results',
+          onRetry: () => viewModel.getCompatibilityAll(),
+        ),
       );
     }
 
     if (state.status == CompatibilityStatus.loaded &&
         state.compatibilityResults.isEmpty) {
-      return EmptyState(
-        title: 'No Pets Found',
-        message:
-            'There are no pets available for compatibility matching right now.',
-        icon: Icons.pets,
-      );
-    }
-
-    if (state.status == CompatibilityStatus.loaded) {
-      return RefreshIndicator(
-        onRefresh: () async {
-          await viewModel.getCompatibilityAll();
-        },
-        child: ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: state.compatibilityResults.length,
-          itemBuilder: (context, index) {
-            final result = state.compatibilityResults[index];
-            final pet = result.pet;
-
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: PetCompatibilityCard(
-                score: result.score.compatibilityScore,
-                pet: pet,
-                breakdown: result.score.breakdown,
-                onTap: () {
-                  Navigator.pushNamed(
-                    context,
-                    '/pet-compatibility-detail',
-                    arguments: result,
-                  );
-                },
+      return SliverFillRemaining(
+        child: EmptyState(
+          title: 'Finding your soul-pet...',
+          message: 'Try adjusting your preferences to find more furry friends!',
+          icon: Icons.pets_rounded,
+          actionText: 'Adjust Preferences',
+          action: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const QuestionnairePage(),
               ),
             );
           },
@@ -126,7 +181,33 @@ class _CompatibilityResultsPageState
       );
     }
 
-    return const Center(child: CircularProgressIndicator());
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(16, 60, 16, 120),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate((context, index) {
+          final result = state.compatibilityResults[index];
+          return AnimatedContainer(
+            duration: Duration(milliseconds: 300 + (index * 100)),
+            curve: Curves.easeOut,
+            margin: const EdgeInsets.only(bottom: 20),
+            child: PetCompatibilityCard(
+              score: result.score.compatibilityScore,
+              pet: result.pet,
+              breakdown: result.score.breakdown,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        PetCompatibilityDetailPage(result: result),
+                  ),
+                );
+              },
+            ),
+          );
+        }, childCount: state.compatibilityResults.length),
+      ),
+    );
   }
 
   void _showDeleteDialog(
@@ -136,23 +217,41 @@ class _CompatibilityResultsPageState
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Questionnaire'),
-        content: const Text(
-          'Are you sure you want to delete your questionnaire? '
-          'This will reset your compatibility results.',
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text('Start Over?', style: AppStyles.headline3),
+        content: Text(
+          'This will clear your current matches and reset your questionnaire.',
+          style: AppStyles.body,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(
+              'Keep Matches',
+              style: AppStyles.body.copyWith(color: AppColors.textGrey),
+            ),
           ),
-          TextButton(
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.errorRed.withOpacity(0.1),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
             onPressed: () {
               viewModel.deleteQuestionnaire();
               Navigator.pop(context);
-              Navigator.pop(context);
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text(
+              'Delete',
+              style: AppStyles.body.copyWith(
+                color: AppColors.errorRed,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),

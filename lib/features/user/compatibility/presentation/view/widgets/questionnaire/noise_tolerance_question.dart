@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pet_connect/config/themes/app_colors.dart';
+import 'package:pet_connect/config/themes/app_styles.dart';
 
 class NoiseToleranceQuestion extends StatelessWidget {
   final String? selectedValue;
@@ -15,136 +17,138 @@ class NoiseToleranceQuestion extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'What is your noise tolerance level?',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Some pets are more vocal than others.',
-          style: TextStyle(color: Colors.grey),
-        ),
-        const SizedBox(height: 20),
         _buildOption(
-          context,
-          '🔇 Low Tolerance',
-          'Prefer quiet pets, sensitive to noise',
-          'low',
-          Icons.volume_off,
+          title: 'Low Tolerance',
+          description: 'Prefer quiet pets, sensitive to noise',
+          value: 'low',
+          icon: Icons.volume_mute_rounded,
+          intensityBars: 1,
+          accentColor: Colors.blueAccent,
         ),
         _buildOption(
-          context,
-          '🔉 Moderate Tolerance',
-          'Some noise is okay',
-          'moderate',
-          Icons.volume_down,
+          title: 'Moderate Tolerance',
+          description: 'Occasional barking or meowing is okay',
+          value: 'moderate',
+          icon: Icons.volume_down_rounded,
+          intensityBars: 2,
+          accentColor: AppColors.warningYellow,
         ),
         _buildOption(
-          context,
-          '🔊 High Tolerance',
-          'Noise doesn\'t bother me',
-          'high',
-          Icons.volume_up,
+          title: 'High Tolerance',
+          description: "Vocal pets don't bother me at all",
+          value: 'high',
+          icon: Icons.volume_up_rounded,
+          intensityBars: 3,
+          accentColor: AppColors.errorRed,
         ),
       ],
     );
   }
 
-  Widget _buildOption(
-    BuildContext context,
-    String title,
-    String description,
-    String value,
-    IconData icon,
-  ) {
+  Widget _buildOption({
+    required String title,
+    required String description,
+    required String value,
+    required IconData icon,
+    required int intensityBars,
+    required Color accentColor,
+  }) {
     final isSelected = selectedValue == value;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Material(
-        color: isSelected
-            ? Theme.of(context).primaryColor.withOpacity(0.1)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          onTap: () => onChanged(value),
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: isSelected
-                    ? Theme.of(context).primaryColor
-                    : Colors.grey[300]!,
-                width: isSelected ? 2 : 1,
-              ),
-              borderRadius: BorderRadius.circular(12),
+      padding: const EdgeInsets.only(bottom: 16),
+      child: InkWell(
+        onTap: () => onChanged(value),
+        borderRadius: BorderRadius.circular(24),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white : Colors.white.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: isSelected ? accentColor : Colors.transparent,
+              width: 2,
             ),
-            child: Row(
-              children: [
-                Icon(
-                  icon,
+            boxShadow: [
+              BoxShadow(
+                color: isSelected
+                    ? accentColor.withOpacity(0.15)
+                    : Colors.black.withOpacity(0.03),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              // Icon with circular backdrop
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
                   color: isSelected
-                      ? Theme.of(context).primaryColor
-                      : Colors.grey,
+                      ? accentColor.withOpacity(0.1)
+                      : AppColors.background,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  color: isSelected ? accentColor : AppColors.textLightGrey,
                   size: 28,
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          color: isSelected
-                              ? Theme.of(context).primaryColor
-                              : Colors.black,
-                        ),
+              ),
+              const SizedBox(width: 20),
+              // Text Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: AppStyles.body.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: isSelected ? accentColor : AppColors.textBlack,
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        description,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isSelected
-                          ? Theme.of(context).primaryColor
-                          : Colors.grey[400]!,
-                      width: 2,
                     ),
-                  ),
-                  child: isSelected
-                      ? Center(
-                          child: Container(
-                            width: 12,
-                            height: 12,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Theme.of(context).primaryColor,
-                            ),
-                          ),
-                        )
-                      : null,
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      style: AppStyles.small.copyWith(
+                        color: AppColors.textGrey,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              // Intensity Meter Visual
+              _buildIntensityMeter(
+                intensityBars,
+                isSelected ? accentColor : AppColors.backgroundGrey,
+              ),
+            ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildIntensityMeter(int bars, Color color) {
+    return Row(
+      children: List.generate(3, (index) {
+        return Container(
+          width: 6,
+          height: 12.0 + (index * 6), // Bars get taller
+          margin: const EdgeInsets.only(left: 4),
+          decoration: BoxDecoration(
+            color: index < bars
+                ? color
+                : AppColors.backgroundGrey.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(4),
+          ),
+        );
+      }),
     );
   }
 }

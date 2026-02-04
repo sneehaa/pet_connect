@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pet_connect/config/themes/app_colors.dart';
+import 'package:pet_connect/config/themes/app_styles.dart';
 
 class WorkScheduleQuestion extends StatelessWidget {
   final String? selectedValue;
@@ -12,119 +14,143 @@ class WorkScheduleQuestion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'What is your work schedule?',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Helps match pets that fit your availability.',
-          style: TextStyle(color: Colors.grey),
-        ),
-        const SizedBox(height: 20),
-        _buildOption(
-          context,
-          '🏠 Home All Day',
-          'Work from home or stay at home',
-          'home_all_day',
-          Icons.home,
-        ),
-        _buildOption(
-          context,
-          '⏰ Part-time Away',
-          'Out of home 4-6 hours per day',
-          'part_time_away',
-          Icons.access_time,
-        ),
-        _buildOption(
-          context,
-          '💼 Full-time Away',
-          'Out of home 8+ hours per day',
-          'full_time_away',
-          Icons.business_center,
-        ),
-      ],
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          _buildTimelineOption(
+            title: 'Home All Day',
+            description: 'Remote work or stay-at-home lifestyle',
+            value: 'home_all_day',
+            icon: Icons.wb_sunny_rounded,
+            accentColor: AppColors.successGreen,
+          ),
+          _buildTimelineOption(
+            title: 'Part-time Away',
+            description: 'Out of home for 4-6 hours daily',
+            value: 'part_time_away',
+            icon: Icons.wb_twilight_rounded,
+            accentColor: AppColors.warningYellow,
+          ),
+          _buildTimelineOption(
+            title: 'Full-time Away',
+            description: 'Standard 8+ hour workday away',
+            value: 'full_time_away',
+            icon: Icons.nightlight_round,
+            accentColor: AppColors.primaryBlue,
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildOption(
-    BuildContext context,
-    String title,
-    String description,
-    String value,
-    IconData icon,
-  ) {
+  Widget _buildTimelineOption({
+    required String title,
+    required String description,
+    required String value,
+    required IconData icon,
+    required Color accentColor,
+  }) {
     final isSelected = selectedValue == value;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Material(
-        color: isSelected
-            ? Theme.of(context).primaryColor.withOpacity(0.1)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          onTap: () => onChanged(value),
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: isSelected
-                    ? Theme.of(context).primaryColor
-                    : Colors.grey[300]!,
-                width: isSelected ? 2 : 1,
-              ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  icon,
-                  color: isSelected
-                      ? Theme.of(context).primaryColor
-                      : Colors.grey,
-                  size: 24,
+    return IntrinsicHeight(
+      child: Row(
+        children: [
+          // Timeline Indicator Column
+          Column(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: isSelected ? accentColor : AppColors.backgroundGrey,
+                  shape: BoxShape.circle,
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: accentColor.withOpacity(0.4),
+                            blurRadius: 8,
+                          ),
+                        ]
+                      : [],
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                child: Icon(
+                  icon,
+                  color: isSelected ? Colors.white : AppColors.textLightGrey,
+                  size: 20,
+                ),
+              ),
+              Expanded(
+                child: Container(width: 2, color: AppColors.backgroundGrey),
+              ),
+            ],
+          ),
+          const SizedBox(width: 16),
+          // Content Card
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 24),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? Colors.white
+                      : Colors.white.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: isSelected ? accentColor : Colors.transparent,
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: InkWell(
+                  onTap: () => onChanged(value),
+                  borderRadius: BorderRadius.circular(24),
+                  child: Row(
                     children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          color: isSelected
-                              ? Theme.of(context).primaryColor
-                              : Colors.black,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: AppStyles.body.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: isSelected
+                                    ? accentColor
+                                    : AppColors.textBlack,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              description,
+                              style: AppStyles.small.copyWith(
+                                color: AppColors.textGrey,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        description,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
+                      if (isSelected)
+                        Icon(Icons.check_circle_rounded, color: accentColor)
+                      else
+                        const Icon(
+                          Icons.circle_outlined,
+                          color: AppColors.backgroundGrey,
                         ),
-                      ),
                     ],
                   ),
                 ),
-                Radio<String>(
-                  value: value,
-                  groupValue: selectedValue,
-                  onChanged: (v) => onChanged(v!),
-                  activeColor: Theme.of(context).primaryColor,
-                ),
-              ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }

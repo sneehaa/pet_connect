@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pet_connect/config/themes/app_colors.dart';
+import 'package:pet_connect/config/themes/app_styles.dart';
 
 class TimeCommitmentQuestion extends StatelessWidget {
   final String? selectedValue;
@@ -12,110 +14,133 @@ class TimeCommitmentQuestion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'How much time can you dedicate daily?',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Estimates for exercise, training, and care.',
-          style: TextStyle(color: Colors.grey),
-        ),
-        const SizedBox(height: 20),
-        _buildOption(
-          context,
-          '⏱️ Limited (1-2 hours)',
-          'Basic care, short walks',
-          'limited',
-          Icons.timer,
-          Colors.red,
-        ),
-        _buildOption(
-          context,
-          '🕐 Moderate (2-4 hours)',
-          'Regular exercise, some training',
-          'moderate',
-          Icons.access_time,
-          Colors.orange,
-        ),
-        _buildOption(
-          context,
-          '⭐ Extensive (4+ hours)',
-          'Lots of attention, training, activities',
-          'extensive',
-          Icons.star,
-          Colors.green,
-        ),
-      ],
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        children: [
+          _buildOption(
+            title: 'Limited (1-2 hours)',
+            description: 'Basic care and quick strolls',
+            value: 'limited',
+            icon: Icons.timer_outlined,
+            accentColor: Colors.cyan,
+            percentage: 0.25,
+          ),
+          _buildOption(
+            title: 'Moderate (2-4 hours)',
+            description: 'Regular play, training, and exercise',
+            value: 'moderate',
+            icon: Icons.schedule_rounded,
+            accentColor: AppColors.primaryOrange,
+            percentage: 0.55,
+          ),
+          _buildOption(
+            title: 'Extensive (4+ hours)',
+            description: 'Active lifestyle and constant companionship',
+            value: 'extensive',
+            icon: Icons.history_edu_outlined,
+            accentColor: Colors.deepPurpleAccent,
+            percentage: 0.90,
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildOption(
-    BuildContext context,
-    String title,
-    String description,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
+  Widget _buildOption({
+    required String title,
+    required String description,
+    required String value,
+    required IconData icon,
+    required Color accentColor,
+    required double percentage,
+  }) {
     final isSelected = selectedValue == value;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Material(
-        color: isSelected ? color.withOpacity(0.05) : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
+      padding: const EdgeInsets.only(bottom: 16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : Colors.white.withOpacity(0.6),
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: isSelected
+                  ? accentColor.withOpacity(0.2)
+                  : Colors.black.withOpacity(0.04),
+              blurRadius: 15,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
         child: InkWell(
           onTap: () => onChanged(value),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(28),
           child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(28),
               border: Border.all(
-                color: isSelected ? color : Colors.grey[300]!,
-                width: isSelected ? 2 : 1,
+                color: isSelected ? accentColor : Colors.transparent,
+                width: 2,
               ),
-              borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(icon, color: color),
+                // Circular Progress Indicator around Icon
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: 54,
+                      height: 54,
+                      child: CircularProgressIndicator(
+                        value: percentage,
+                        strokeWidth: 4,
+                        color: isSelected
+                            ? accentColor
+                            : accentColor.withOpacity(0.2),
+                        backgroundColor: AppColors.backgroundGrey,
+                      ),
+                    ),
+                    Icon(
+                      icon,
+                      color: isSelected ? accentColor : AppColors.textLightGrey,
+                      size: 26,
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 20),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         title,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          color: isSelected ? color : Colors.black,
+                        style: AppStyles.body.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 17,
+                          color: isSelected ? accentColor : AppColors.textBlack,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         description,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
+                        style: AppStyles.small.copyWith(
+                          color: AppColors.textGrey,
                         ),
                       ),
                     ],
                   ),
                 ),
-                if (isSelected) Icon(Icons.check_circle, color: color),
+                if (isSelected)
+                  Icon(Icons.check_circle_rounded, color: accentColor)
+                else
+                  const Icon(
+                    Icons.add_circle_outline_rounded,
+                    color: AppColors.backgroundGrey,
+                  ),
               ],
             ),
           ),

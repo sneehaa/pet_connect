@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pet_connect/config/themes/app_colors.dart';
+import 'package:pet_connect/config/themes/app_styles.dart';
 
 class PetExperienceQuestion extends StatelessWidget {
   final String? selectedValue;
@@ -15,117 +17,119 @@ class PetExperienceQuestion extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'What is your pet ownership experience?',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Helps recommend pets suitable for your experience level.',
-          style: TextStyle(color: Colors.grey),
-        ),
-        const SizedBox(height: 20),
         _buildOption(
-          context,
-          '👶 First-time Owner',
-          'Never owned a pet before',
-          'first_time',
-          Icons.child_care,
+          title: 'First-time Owner',
+          description: 'Ready to start a new journey with a best friend.',
+          value: 'first_time',
+          icon: Icons.auto_awesome_outlined,
+          accentColor: AppColors.primaryBlue,
         ),
         _buildOption(
-          context,
-          '👍 Some Experience',
-          'Owned pets in the past',
-          'some_experience',
-          Icons.thumb_up,
+          title: 'Some Experience',
+          description: 'I’ve shared my life with pets before.',
+          value: 'some_experience',
+          icon: Icons.pets_outlined,
+          accentColor: AppColors.primaryOrange,
         ),
         _buildOption(
-          context,
-          '🏆 Experienced',
-          'Currently own pets or extensive experience',
-          'experienced',
-          Icons.emoji_events,
+          title: 'Experienced Pro',
+          description: 'Extensive knowledge of pet care and behavior.',
+          value: 'experienced',
+          icon: Icons.workspace_premium_outlined,
+          accentColor: AppColors.successGreen,
         ),
       ],
     );
   }
 
-  Widget _buildOption(
-    BuildContext context,
-    String title,
-    String description,
-    String value,
-    IconData icon,
-  ) {
+  Widget _buildOption({
+    required String title,
+    required String description,
+    required String value,
+    required IconData icon,
+    required Color accentColor,
+  }) {
     final isSelected = selectedValue == value;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Material(
-        color: isSelected
-            ? Theme.of(context).primaryColor.withOpacity(0.1)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          onTap: () => onChanged(value),
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: isSelected
-                    ? Theme.of(context).primaryColor
-                    : Colors.grey[300]!,
-                width: isSelected ? 2 : 1,
-              ),
-              borderRadius: BorderRadius.circular(12),
+      padding: const EdgeInsets.only(bottom: 16),
+      child: InkWell(
+        onTap: () => onChanged(value),
+        borderRadius: BorderRadius.circular(24),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutQuart,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: isSelected
+                  ? accentColor
+                  : AppColors.backgroundGrey.withOpacity(0.5),
+              width: 2,
             ),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? Theme.of(context).primaryColor.withOpacity(0.1)
-                        : Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: isSelected
-                        ? Theme.of(context).primaryColor
-                        : Colors.grey,
-                  ),
+            boxShadow: [
+              if (isSelected)
+                BoxShadow(
+                  color: accentColor.withOpacity(0.2),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                )
+              else
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          color: isSelected
-                              ? Theme.of(context).primaryColor
-                              : Colors.black,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        description,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
-                      ),
+            ],
+          ),
+          child: Row(
+            children: [
+              // Badge Container
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      accentColor.withOpacity(0.1),
+                      accentColor.withOpacity(0.05),
                     ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
+                  borderRadius: BorderRadius.circular(18),
                 ),
-              ],
-            ),
+                child: Icon(icon, color: accentColor, size: 30),
+              ),
+              const SizedBox(width: 20),
+              // Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: AppStyles.body.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: isSelected ? accentColor : AppColors.textBlack,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      style: AppStyles.small.copyWith(
+                        color: AppColors.textGrey,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (isSelected)
+                Icon(Icons.verified_rounded, color: accentColor, size: 24),
+            ],
           ),
         ),
       ),

@@ -72,7 +72,7 @@ class CompatibilityViewModel extends StateNotifier<CompatibilityState> {
     }
   }
 
-  // Get user's questionnaire
+  // In compatibility_viewmodel.dart
   Future<void> getQuestionnaire() async {
     try {
       state = state.copyWith(isLoading: true, message: null);
@@ -80,15 +80,32 @@ class CompatibilityViewModel extends StateNotifier<CompatibilityState> {
 
       result.fold(
         (failure) {
-          state = state.copyWith(
-            isLoading: false,
-            message: 'No questionnaire found. Please complete one first.',
-          );
+          // Special handling for "No questionnaire found"
+          if (failure.error.contains('No questionnaire found') ||
+              failure.error ==
+                  'No questionnaire found. Please complete the lifestyle questionnaire first.') {
+            // This is not an error - it's just that no questionnaire exists yet
+            state = state.copyWith(
+              isLoading: false,
+              questionnaire: null, // Explicitly set to null
+              status: CompatibilityStatus.loaded,
+              message: null, // Clear any error message
+            );
+          } else {
+            // Real error
+            state = state.copyWith(
+              isLoading: false,
+              status: CompatibilityStatus.error,
+              message: failure.error,
+            );
+          }
         },
         (questionnaire) {
+          // Success - questionnaire found
           state = state.copyWith(
             isLoading: false,
             questionnaire: questionnaire,
+            status: CompatibilityStatus.loaded,
             message: null,
           );
         },
@@ -96,7 +113,8 @@ class CompatibilityViewModel extends StateNotifier<CompatibilityState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        message: 'Error loading questionnaire: $e',
+        status: CompatibilityStatus.error,
+        message: 'Error: $e',
       );
     }
   }

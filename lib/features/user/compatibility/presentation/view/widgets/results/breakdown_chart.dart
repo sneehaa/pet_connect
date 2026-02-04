@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pet_connect/config/themes/app_colors.dart';
+import 'package:pet_connect/config/themes/app_styles.dart';
 
 class BreakdownChart extends StatelessWidget {
   final Map<String, dynamic> breakdown;
@@ -9,95 +11,148 @@ class BreakdownChart extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<MapEntry<String, dynamic>> entries = breakdown.entries.toList();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Compatibility Breakdown',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 16),
-        ...entries.map((entry) {
-          final category = _formatCategory(entry.key);
-          final data = entry.value as Map<String, dynamic>;
-          final score = data['score'] as int? ?? 0;
-          final detail = data['detail'] as String? ?? '';
-
-          return _buildBar(category, score, detail, data['weight']);
-        }),
-      ],
-    );
-  }
-
-  Widget _buildBar(String category, int score, String detail, String weight) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Icon(
+                Icons.analytics_outlined,
+                color: AppColors.primaryOrange,
+              ),
+              const SizedBox(width: 8),
+              Text('Compatibility Breakdown', style: AppStyles.headline3),
+            ],
+          ),
+          const SizedBox(height: 24),
+          ...entries.map((entry) {
+            final category = _formatCategory(entry.key);
+            final data = entry.value as Map<String, dynamic>;
+            final score = data['score'] as int? ?? 0;
+            final detail = data['detail'] as String? ?? '';
+            final weight = data['weight'] as String? ?? 'Normal';
+
+            return _buildModernBar(category, score, detail, weight);
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModernBar(
+    String category,
+    int score,
+    String detail,
+    String weight,
+  ) {
+    final Color scoreColor = _getScoreColor(score);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
               Text(
                 category,
-                style: const TextStyle(fontWeight: FontWeight.w500),
+                style: AppStyles.body.copyWith(fontWeight: FontWeight.bold),
               ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.backgroundGrey,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  'W: $weight',
+                  style: AppStyles.small.copyWith(
+                    fontSize: 10,
+                    color: AppColors.textGrey,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
               Text(
                 '$score%',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: _getScoreColor(score),
+                style: AppStyles.headline3.copyWith(
+                  color: scoreColor,
+                  fontSize: 16,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            'Weight: $weight',
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            height: 8,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(4),
-              color: Colors.grey[200],
-            ),
-            child: FractionallySizedBox(
-              alignment: Alignment.centerLeft,
-              widthFactor: score / 100,
-              child: Container(
+          const SizedBox(height: 10),
+          Stack(
+            children: [
+              // Track
+              Container(
+                height: 12,
+                width: double.infinity,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4),
-                  gradient: LinearGradient(
-                    colors: [
-                      _getScoreColor(score).withOpacity(0.8),
-                      _getScoreColor(score).withOpacity(0.6),
-                    ],
-                  ),
+                  color: AppColors.backgroundGrey,
+                  borderRadius: BorderRadius.circular(20),
                 ),
               ),
-            ),
+              // Progress
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 800),
+                curve: Curves.easeOutCubic,
+                height: 12,
+                width: (score / 100) * 300, // Approximate width for visual flow
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [scoreColor, scoreColor.withOpacity(0.6)],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: scoreColor.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           if (detail.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
               detail,
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
+              style: AppStyles.small.copyWith(
+                color: AppColors.textLightGrey,
+                fontStyle: FontStyle.italic,
+              ),
             ),
           ],
+          const Divider(height: 32, color: AppColors.backgroundGrey),
         ],
       ),
     );
   }
 
   Color _getScoreColor(int score) {
-    if (score >= 80) return Colors.green;
-    if (score >= 60) return Colors.orange;
-    return Colors.red;
+    if (score >= 80) return AppColors.successGreen;
+    if (score >= 60) return AppColors.warningYellow;
+    return AppColors.errorRed;
   }
 
   String _formatCategory(String key) {
-    return key[0].toUpperCase() + key.substring(1);
+    return key[0].toUpperCase() + key.substring(1).replaceAll('_', ' ');
   }
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pet_connect/config/themes/app_colors.dart';
+import 'package:pet_connect/config/themes/app_styles.dart';
 import 'package:pet_connect/features/user/compatibility/presentation/state/compatibility_state.dart';
 import 'package:pet_connect/features/user/compatibility/presentation/view/screens/questionnaire_page.dart';
 import 'package:pet_connect/features/user/compatibility/presentation/viewmodel/compatibility_viewmodel.dart';
@@ -16,81 +18,96 @@ class CompatibilityHomePage extends ConsumerStatefulWidget {
 }
 
 class _CompatibilityHomePageState extends ConsumerState<CompatibilityHomePage> {
-  bool _isInitialized = false;
-
   @override
   void initState() {
     super.initState();
-    // Load questionnaire when page opens
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(compatibilityViewModelProvider.notifier).getQuestionnaire();
-    });
+    Future.microtask(
+      () =>
+          ref.read(compatibilityViewModelProvider.notifier).getQuestionnaire(),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(compatibilityViewModelProvider);
-    final viewModel = ref.read(compatibilityViewModelProvider.notifier);
 
-    // Check if we're loading for the first time
-    if (!_isInitialized &&
-        state.status == CompatibilityStatus.initial &&
-        !state.isLoading) {
-      return const _LoadingScreen();
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 500),
+        switchInCurve: Curves.easeIn,
+        switchOutCurve: Curves.easeOut,
+        child: _buildCurrentView(state),
+      ),
+    );
+  }
+
+  Widget _buildCurrentView(CompatibilityState state) {
+    if (state.isLoading && state.status == CompatibilityStatus.initial) {
+      return const _LoadingScreen(key: ValueKey('loading'));
     }
 
-    // Set initialized flag after first load
-    if (state.status != CompatibilityStatus.initial) {
-      _isInitialized = true;
-    }
-
-    // Show loading screen
-    if (state.isLoading && !_isInitialized) {
-      return const _LoadingScreen();
-    }
-
-    // Check if questionnaire exists
     if (state.hasQuestionnaire) {
       return CompatibilityResultsPage(
         key: ValueKey('results-${state.questionnaire?.id}'),
       );
-    } else {
-      return NoQuestionnairePage(
-        key: const ValueKey('no-questionnaire'),
-        onStartQuestionnaire: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const QuestionnairePage()),
-          );
-        },
-        onRetry: () {
-          viewModel.getQuestionnaire();
-        },
-        isLoading: state.isLoading,
-      );
     }
+
+    return NoQuestionnairePage(
+      key: const ValueKey('no-questionnaire'),
+      onStartQuestionnaire: () => _navigateToQuestionnaire(context),
+      onRetry: () =>
+          ref.read(compatibilityViewModelProvider.notifier).getQuestionnaire(),
+      isLoading: state.isLoading,
+    );
+  }
+
+  void _navigateToQuestionnaire(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const QuestionnairePage(),
+        fullscreenDialog: true,
+      ),
+    );
   }
 }
 
 class _LoadingScreen extends StatelessWidget {
-  const _LoadingScreen();
+  const _LoadingScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Pet Compatibility'), centerTitle: true),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(height: 20),
-            Text(
-              'Checking your compatibility profile...',
-              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+    return Container(
+      width: double.infinity,
+      color: AppColors.background,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const SizedBox(
+            width: 60,
+            height: 60,
+            child: CircularProgressIndicator(
+              strokeWidth: 3,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                AppColors.primaryOrange,
+              ),
+              backgroundColor: AppColors.primaryBlue,
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 32),
+          Text(
+            'Finding your perfect match...',
+            style: AppStyles.headline3.copyWith(fontSize: 20),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'We\'re analyzing pet personalities for you.',
+            style: AppStyles.small,
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }

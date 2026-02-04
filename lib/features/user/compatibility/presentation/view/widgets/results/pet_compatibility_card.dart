@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pet_connect/config/themes/app_colors.dart';
+import 'package:pet_connect/config/themes/app_styles.dart';
 import 'package:pet_connect/features/user/pets/domain/entity/pet_entity.dart';
 
 class PetCompatibilityCard extends StatelessWidget {
@@ -16,134 +18,174 @@ class PetCompatibilityCard extends StatelessWidget {
   });
 
   Color _getScoreColor() {
-    if (score >= 80) return Colors.green;
-    if (score >= 60) return Colors.orange;
-    return Colors.red;
-  }
-
-  String _getScoreText() {
-    if (score >= 80) return 'Excellent Match';
-    if (score >= 60) return 'Good Match';
-    if (score >= 40) return 'Fair Match';
-    return 'Poor Match';
+    if (score >= 80) return AppColors.successGreen;
+    if (score >= 60) return AppColors.warningYellow;
+    return AppColors.errorRed;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              // Pet Image
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  image: pet?.photos.isNotEmpty == true
-                      ? DecorationImage(
-                          image: NetworkImage(pet!.photos.first),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
-                  color: Colors.grey[200],
-                ),
-                child: pet?.photos.isEmpty == true
-                    ? const Center(
-                        child: Icon(Icons.pets, size: 40, color: Colors.grey),
-                      )
-                    : null,
-              ),
-              const SizedBox(width: 16),
+    final Color scoreColor = _getScoreColor();
 
-              // Pet Info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(24),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                // Pet Image with Status Overlay
+                Stack(
                   children: [
-                    Text(
-                      pet?.name ?? 'Unknown Pet',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
+                    Container(
+                      width: 90,
+                      height: 90,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        image: pet?.photos.isNotEmpty == true
+                            ? DecorationImage(
+                                image: NetworkImage(pet!.photos.first),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                        color: AppColors.backgroundGrey,
                       ),
+                      child: pet?.photos.isEmpty == true
+                          ? const Icon(
+                              Icons.pets,
+                              size: 30,
+                              color: AppColors.textLightGrey,
+                            )
+                          : null,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${pet?.breed ?? ''} • ${pet?.age ?? 0} years',
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.female,
-                          size: 16,
-                          color: pet?.gender == 'Female'
-                              ? Colors.pink
-                              : Colors.blue,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          pet?.gender ?? '',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                        if (pet?.vaccinated == true) ...[
-                          const SizedBox(width: 12),
-                          const Icon(
-                            Icons.medical_services,
-                            size: 16,
-                            color: Colors.green,
+                    if (pet?.vaccinated == true)
+                      Positioned(
+                        top: 6,
+                        right: 6,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
                           ),
-                          const SizedBox(width: 4),
-                          const Text(
-                            'Vaccinated',
-                            style: TextStyle(fontSize: 12, color: Colors.green),
+                          child: const Icon(
+                            Icons.verified_rounded,
+                            color: AppColors.primaryBlue,
+                            size: 14,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(width: 16),
+
+                // Pet Details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        pet?.name ?? 'Unknown Pet',
+                        style: AppStyles.body.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${pet?.breed ?? 'Mixed Breed'} • ${pet?.age}y',
+                        style: AppStyles.small.copyWith(
+                          color: AppColors.textGrey,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          _buildTag(
+                            pet?.gender == 'Female' ? Icons.female : Icons.male,
+                            pet?.gender ?? '',
+                            pet?.gender == 'Female'
+                                ? Colors.pink
+                                : AppColors.primaryBlue,
                           ),
                         ],
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              // Score Badge
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: _getScoreColor().withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: _getScoreColor().withOpacity(0.3)),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      '$score%',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: _getScoreColor(),
                       ),
-                    ),
-                    Text(
-                      _getScoreText(),
-                      style: TextStyle(fontSize: 10, color: _getScoreColor()),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+
+                // Score Display
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: scoreColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        '$score%',
+                        style: AppStyles.headline3.copyWith(
+                          color: scoreColor,
+                          fontSize: 20,
+                        ),
+                      ),
+                      Text(
+                        'MATCH',
+                        style: AppStyles.small.copyWith(
+                          color: scoreColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 8,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTag(IconData icon, String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: AppStyles.small.copyWith(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 10,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pet_connect/config/themes/app_colors.dart';
+import 'package:pet_connect/config/themes/app_styles.dart';
 
 class HouseholdQuestion extends StatelessWidget {
   final String? selectedValue;
@@ -12,131 +14,121 @@ class HouseholdQuestion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'What is your household situation?',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Helps match pets that fit well with your living situation.',
-          style: TextStyle(color: Colors.grey),
-        ),
-        const SizedBox(height: 20),
-        _buildOption(
-          context,
-          '👤 Living Alone',
-          'Single person household',
-          'single',
-          Icons.person,
-        ),
-        _buildOption(
-          context,
-          '👫 Couple',
-          'Living with a partner',
-          'couple',
-          Icons.favorite,
-        ),
-        _buildOption(
-          context,
-          '👨‍👩‍👧‍👦 Family with Kids',
-          'Children in the household',
-          'family_with_kids',
-          Icons.family_restroom,
-        ),
-        _buildOption(
-          context,
-          '🏠 Roommates',
-          'Sharing with roommates',
-          'roommates',
-          Icons.group,
-        ),
-      ],
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        children: [
+          _buildOption(
+            title: 'Living Alone',
+            description: 'A peaceful single-person home',
+            value: 'single',
+            icon: Icons.person_outline_rounded,
+          ),
+          _buildOption(
+            title: 'Couple',
+            description: 'Two people sharing a life',
+            value: 'couple',
+            icon: Icons.favorite_border_rounded,
+          ),
+          _buildOption(
+            title: 'Family with Kids',
+            description: 'Energetic home with little ones',
+            value: 'family_with_kids',
+            icon: Icons.child_care_rounded,
+          ),
+          _buildOption(
+            title: 'Roommates',
+            description: 'Shared living with friends/peers',
+            value: 'roommates',
+            icon: Icons.groups_outlined,
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildOption(
-    BuildContext context,
-    String title,
-    String description,
-    String value,
-    IconData icon,
-  ) {
+  Widget _buildOption({
+    required String title,
+    required String description,
+    required String value,
+    required IconData icon,
+  }) {
     final isSelected = selectedValue == value;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Material(
-        color: isSelected
-            ? Theme.of(context).primaryColor.withOpacity(0.1)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          onTap: () => onChanged(value),
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: isSelected
-                    ? Theme.of(context).primaryColor
-                    : Colors.grey[300]!,
-                width: isSelected ? 2 : 1,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: isSelected ? Colors.white : Colors.white.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isSelected ? AppColors.primaryOrange : Colors.transparent,
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isSelected
+                ? AppColors.primaryOrange.withOpacity(0.15)
+                : Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: () => onChanged(value),
+        borderRadius: BorderRadius.circular(24),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? AppColors.primaryOrange.withOpacity(0.1)
+                      : AppColors.primaryBlue.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  color: isSelected
+                      ? AppColors.primaryOrange
+                      : AppColors.textDarkGrey,
+                  size: 28,
+                ),
               ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? Theme.of(context).primaryColor.withOpacity(0.1)
-                        : Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: isSelected
-                        ? Theme.of(context).primaryColor
-                        : Colors.grey,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          color: isSelected
-                              ? Theme.of(context).primaryColor
-                              : Colors.black,
-                        ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: AppStyles.body.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: isSelected
+                            ? AppColors.textBlack
+                            : AppColors.textGrey,
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        description,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      style: AppStyles.small.copyWith(
+                        color: AppColors.textLightGrey,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                if (isSelected)
-                  Icon(
-                    Icons.check_circle,
-                    color: Theme.of(context).primaryColor,
-                  ),
-              ],
-            ),
+              ),
+              Radio<String>(
+                value: value,
+                groupValue: selectedValue,
+                activeColor: AppColors.primaryOrange,
+                onChanged: (val) => onChanged(val!),
+              ),
+            ],
           ),
         ),
       ),

@@ -1,29 +1,47 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pet_connect/config/constants/api_endpoints.dart';
 import 'package:pet_connect/core/failure/failure.dart';
 import 'package:pet_connect/core/network/http_service.dart';
+import 'package:pet_connect/core/provider/flutter_secure_storage.dart';
 import 'package:pet_connect/features/user/compatibility/data/model/compatibility_model.dart';
 
 final compatibilityRemoteDataSourceProvider =
     Provider<CompatibilityRemoteDataSource>((ref) {
-      return CompatibilityRemoteDataSource(ref.read(httpServiceProvider));
+      return CompatibilityRemoteDataSource(
+        ref.read(httpServiceProvider),
+        ref.read(flutterSecureStorageProvider),
+      );
     });
 
 class CompatibilityRemoteDataSource {
   final Dio dio;
+  final FlutterSecureStorage secureStorage;
 
-  CompatibilityRemoteDataSource(this.dio);
+  CompatibilityRemoteDataSource(this.dio, this.secureStorage);
 
-  // Submit questionnaire
+  Future<String?> _getAuthToken() async {
+    return await secureStorage.read(key: 'authenticationToken');
+  }
+
   Future<Either<Failure, CompatibilityModel>> submitQuestionnaire(
     Map<String, dynamic> data,
   ) async {
     try {
+      final token = await _getAuthToken();
+
       final response = await dio.post(
         ApiEndpoints.submitQuestionnaire,
         data: data,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        ),
       );
 
       if (response.data['success'] == true) {
@@ -38,10 +56,19 @@ class CompatibilityRemoteDataSource {
     }
   }
 
-  // Get user's questionnaire
   Future<Either<Failure, CompatibilityModel>> getQuestionnaire() async {
     try {
-      final response = await dio.get(ApiEndpoints.getQuestionnaire);
+      final token = await _getAuthToken();
+
+      final response = await dio.get(
+        ApiEndpoints.getQuestionnaire,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Accept': 'application/json',
+          },
+        ),
+      );
 
       if (response.data['success'] == true) {
         return Right(
@@ -55,13 +82,20 @@ class CompatibilityRemoteDataSource {
     }
   }
 
-  // Get compatibility with specific pet
   Future<Either<Failure, CompatibilityResultModel>> getCompatibilityWithPet(
     String petId,
   ) async {
     try {
+      final token = await _getAuthToken();
+
       final response = await dio.get(
         ApiEndpoints.getCompatibilityWithPet(petId),
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Accept': 'application/json',
+          },
+        ),
       );
 
       if (response.data['success'] == true) {
@@ -74,15 +108,22 @@ class CompatibilityRemoteDataSource {
     }
   }
 
-  // Get compatibility with all pets
   Future<Either<Failure, List<CompatibilityResultModel>>> getCompatibilityAll({
     int limit = 50,
     int page = 1,
   }) async {
     try {
+      final token = await _getAuthToken();
+
       final response = await dio.get(
         ApiEndpoints.getCompatibilityAll,
         queryParameters: {'limit': limit, 'page': page},
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Accept': 'application/json',
+          },
+        ),
       );
 
       if (response.data['success'] == true) {
@@ -98,10 +139,19 @@ class CompatibilityRemoteDataSource {
     }
   }
 
-  // Delete questionnaire
   Future<Either<Failure, bool>> deleteQuestionnaire() async {
     try {
-      final response = await dio.delete(ApiEndpoints.deleteQuestionnaire);
+      final token = await _getAuthToken();
+
+      final response = await dio.delete(
+        ApiEndpoints.deleteQuestionnaire,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Accept': 'application/json',
+          },
+        ),
+      );
 
       if (response.data['success'] == true) {
         return Right(true);

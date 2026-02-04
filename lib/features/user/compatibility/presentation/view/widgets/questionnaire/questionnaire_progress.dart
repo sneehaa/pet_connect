@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pet_connect/config/themes/app_colors.dart';
+import 'package:pet_connect/config/themes/app_styles.dart';
 
 class QuestionnaireProgress extends StatelessWidget {
   final int currentStep;
@@ -16,85 +18,83 @@ class QuestionnaireProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double progress = currentStep / totalSteps;
+
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: Colors.grey[200]!),
-        borderRadius: BorderRadius.circular(12),
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Step $currentStep of $totalSteps',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
+          // Percentage and Step Label
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Question $currentStep',
+                      style: AppStyles.headline3.copyWith(fontSize: 16),
+                    ),
+                    Text(
+                      'out of $totalSteps',
+                      style: AppStyles.small.copyWith(
+                        color: AppColors.textLightGrey,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              Text(
-                '${((currentStep / totalSteps) * 100).round()}% Complete',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Theme.of(context).primaryColor,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Stack(
-            children: [
-              Container(
-                height: 8,
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                height: 8,
-                width:
-                    MediaQuery.of(context).size.width *
-                    0.9 *
-                    (currentStep / totalSteps),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Theme.of(context).primaryColor,
-                      Theme.of(context).primaryColor.withOpacity(0.7),
-                    ],
+                Text(
+                  '${(progress * 100).round()}%',
+                  style: AppStyles.headline2.copyWith(
+                    color: AppColors.primaryOrange,
+                    fontSize: 22,
                   ),
-                  borderRadius: BorderRadius.circular(4),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+          // Modern Progress Track
+          Stack(
             children: [
-              if (onBack != null)
-                ElevatedButton.icon(
-                  onPressed: onBack,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey[100],
-                    foregroundColor: Colors.grey[700],
+              // Background Track
+              Container(
+                height: 10,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: AppColors.backgroundGrey,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              // Glowing Progress Bar
+              AnimatedFractionallySizedBox(
+                duration: const Duration(milliseconds: 500),
+                curve: Curves.easeOutCubic,
+                widthFactor: progress,
+                child: Container(
+                  height: 10,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [AppColors.primaryOrange, Color(0xFFFFB099)],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primaryOrange.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  icon: const Icon(Icons.arrow_back, size: 16),
-                  label: const Text('Back'),
                 ),
-              const Spacer(),
-              if (onNext != null)
-                ElevatedButton.icon(
-                  onPressed: onNext,
-                  icon: Text(currentStep == totalSteps ? 'Submit' : 'Next'),
-                  label: const Icon(Icons.arrow_forward, size: 16),
-                ),
+              ),
             ],
           ),
         ],

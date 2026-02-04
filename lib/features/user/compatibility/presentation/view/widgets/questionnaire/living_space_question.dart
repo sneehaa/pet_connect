@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pet_connect/config/themes/app_colors.dart';
+import 'package:pet_connect/config/themes/app_styles.dart';
 
 class LivingSpaceQuestion extends StatelessWidget {
   final String? selectedValue;
@@ -12,115 +14,115 @@ class LivingSpaceQuestion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      crossAxisSpacing: 16,
+      mainAxisSpacing: 16,
+      childAspectRatio: 0.85,
       children: [
-        const Text(
-          'What type of living space do you have?',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        _buildGridOption(
+          title: 'Apartment',
+          description: 'Compact & cozy',
+          value: 'apartment',
+          icon: Icons.apartment_rounded,
         ),
-        const SizedBox(height: 8),
-        const Text(
-          'This helps us find pets that will be comfortable in your home.',
-          style: TextStyle(color: Colors.grey),
+        _buildGridOption(
+          title: 'Small House',
+          description: 'Single-family living',
+          value: 'house_small',
+          icon: Icons.home_rounded,
         ),
-        const SizedBox(height: 20),
-        _buildOption(
-          context,
-          '🏢 Apartment',
-          'Compact living, shared walls',
-          'apartment',
+        _buildGridOption(
+          title: 'Large House',
+          description: 'Plenty of room',
+          value: 'house_large',
+          icon: Icons.other_houses_rounded,
         ),
-        _buildOption(
-          context,
-          '🏠 Small House',
-          'Single-family home with limited space',
-          'house_small',
-        ),
-        _buildOption(
-          context,
-          '🏡 Large House',
-          'Spacious home with room to roam',
-          'house_large',
-        ),
-        _buildOption(
-          context,
-          '🌾 Farm/Rural',
-          'Large property, plenty of outdoor space',
-          'farm',
+        _buildGridOption(
+          title: 'Rural/Farm',
+          description: 'Wide open spaces',
+          value: 'farm',
+          icon: Icons.landscape_rounded,
         ),
       ],
     );
   }
 
-  Widget _buildOption(
-    BuildContext context,
-    String title,
-    String description,
-    String value,
-  ) {
+  Widget _buildGridOption({
+    required String title,
+    required String description,
+    required String value,
+    required IconData icon,
+  }) {
     final isSelected = selectedValue == value;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Material(
-        color: isSelected
-            ? Theme.of(context).primaryColor.withOpacity(0.1)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          onTap: () => onChanged(value),
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: isSelected
-                    ? Theme.of(context).primaryColor
-                    : Colors.grey[300]!,
-                width: isSelected ? 2 : 1,
-              ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  isSelected
-                      ? Icons.radio_button_checked
-                      : Icons.radio_button_unchecked,
-                  color: isSelected
-                      ? Theme.of(context).primaryColor
-                      : Colors.grey,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          color: isSelected
-                              ? Theme.of(context).primaryColor
-                              : Colors.black,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        description,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+    return GestureDetector(
+      onTap: () => onChanged(value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primaryBlue : Colors.white,
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.primaryOrange.withOpacity(0.5)
+                : Colors.transparent,
+            width: 2,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: isSelected
+                  ? AppColors.primaryOrange.withOpacity(0.1)
+                  : Colors.black.withOpacity(0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isSelected ? Colors.white : AppColors.background,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                size: 32,
+                color: isSelected
+                    ? AppColors.primaryOrange
+                    : AppColors.textDarkGrey,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: AppStyles.body.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: isSelected ? AppColors.textBlack : AppColors.textGrey,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              description,
+              textAlign: TextAlign.center,
+              style: AppStyles.small.copyWith(
+                fontSize: 11,
+                color: isSelected
+                    ? AppColors.textGrey
+                    : AppColors.textLightGrey,
+              ),
+            ),
+          ],
         ),
       ),
     );
