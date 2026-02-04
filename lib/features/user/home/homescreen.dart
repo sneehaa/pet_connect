@@ -11,6 +11,7 @@ import 'package:pet_connect/features/user/businesses/presentation/viewmodel/busi
 import 'package:pet_connect/features/user/home/widgets/custom_appbar.dart';
 import 'package:pet_connect/features/user/payment/presentation/view/screens/wallet_screen.dart';
 import 'package:pet_connect/features/user/profile/presentation/view/profile_screen.dart';
+import 'package:pet_connect/features/user/profile/presentation/viewmodel/profile_viewmodel.dart';
 import 'package:pet_connect/utils/login_choice.dart';
 import 'package:pet_connect/widgets/custom_navbar.dart';
 
@@ -109,9 +110,17 @@ class _HomescreenState extends ConsumerState<Homescreen> {
               );
               final unreadCount = notificationState.unreadCount;
 
+              final profileState = ref.watch(userProfileViewModelProvider);
+
+              String userName = 'User';
+
+              if (profileState.userProfile != null) {
+                userName = profileState.userProfile!.username;
+              }
+
               return CustomAppBar(
                 selectedIndex: _selectedIndex,
-                userName: 'Pet Lover',
+                userName: userName,
                 unreadNotificationCount: unreadCount,
                 onNotificationTap: () {
                   Navigator.push(

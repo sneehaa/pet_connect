@@ -1,6 +1,9 @@
 import 'package:pet_connect/features/user/payment/domain/entity/payment_entity.dart';
 
 class PaymentModel extends PaymentEntity {
+  final String? userName;
+  final String? petName;
+
   const PaymentModel({
     super.id,
     required super.userId,
@@ -14,6 +17,8 @@ class PaymentModel extends PaymentEntity {
     super.metadata = const {},
     super.createdAt,
     super.completedAt,
+    this.userName,
+    this.petName,
   });
 
   factory PaymentModel.fromJson(Map<String, dynamic> json) {
@@ -34,6 +39,8 @@ class PaymentModel extends PaymentEntity {
       completedAt: json['completedAt'] != null
           ? DateTime.parse(json['completedAt'])
           : null,
+      userName: json['userName'],
+      petName: json['petName'],
     );
   }
 
@@ -48,6 +55,8 @@ class PaymentModel extends PaymentEntity {
       'paymentMethod': paymentMethod,
       'transactionId': transactionId,
       'metadata': metadata,
+      'userName': userName,
+      'petName': petName,
     };
   }
 }

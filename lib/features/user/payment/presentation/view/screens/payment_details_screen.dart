@@ -288,11 +288,15 @@ class _PaymentDetailsScreenState extends ConsumerState<PaymentDetailsScreen> {
         ),
         const SizedBox(height: 12),
         TextButton(
-          onPressed: () => Navigator.pushNamed(
-            context,
-            '/payment-summary',
-            arguments: widget.paymentId,
-          ),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    PaymentDetailsScreen(paymentId: widget.paymentId),
+              ),
+            );
+          },
           child: Text(
             'View Payment Summary',
             style: AppStyles.linkText.copyWith(fontSize: 16),

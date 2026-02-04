@@ -5,10 +5,14 @@ import 'package:pet_connect/config/themes/app_styles.dart';
 import 'package:pet_connect/features/business/business_dashboard/presentation/view/%20pets_list.dart';
 import 'package:pet_connect/features/business/business_dashboard/presentation/view/adoption_requests_list.dart';
 import 'package:pet_connect/features/business/business_dashboard/presentation/viewmodel/dashboard_view_model.dart';
+import 'package:pet_connect/features/business/business_payment/presentation/view/screens/business_payment_dashboard_screen.dart';
 import 'package:pet_connect/features/business/business_profile/presentation/view/business_profile.dart';
+import 'package:pet_connect/features/business/business_profile/presentation/viewmodel/business_profile_viewmodel.dart';
 import 'package:pet_connect/features/notifications/presentation/view/business_notifications_screen.dart';
 import 'package:pet_connect/features/notifications/presentation/viewmodel/notification_view_model.dart';
+import 'package:pet_connect/features/user/home/widgets/custom_appbar.dart';
 import 'package:pet_connect/utils/login_choice.dart';
+import 'package:pet_connect/widgets/dashboard_nav_bar.dart';
 
 class BusinessDashboardScreen extends ConsumerStatefulWidget {
   const BusinessDashboardScreen({super.key});
@@ -22,43 +26,10 @@ class _BusinessDashboardScreenState
     extends ConsumerState<BusinessDashboardScreen> {
   int _selectedIndex = 0;
 
-  final List<Map<String, dynamic>> _screenData = [
-    {
-      'title': 'Dashboard',
-      'icon_asset': 'assets/icons/app.png',
-      'subtitle': 'Overview of your business',
-    },
-    {
-      'title': 'My Pets',
-      'icon_asset': 'assets/icons/paw.png',
-      'subtitle': 'Manage your pet listings',
-    },
-    {
-      'title': 'Adoption History',
-      'icon_asset': 'assets/icons/requests.png',
-      'subtitle': 'Track all adoption requests',
-    },
-    {
-      'title': 'Profile',
-      'icon_asset': 'assets/icons/user.png',
-      'subtitle': 'Business settings & info',
-    },
-  ];
-
-  final List<String> _navAssetPaths = [
-    'assets/icons/app.png',
-    'assets/icons/paw.png',
-    'assets/icons/requests.png',
-    'assets/icons/user.png',
-  ];
-  final List<String> _navLabels = ['Home', 'Pets', 'History', 'Profile'];
-
-  final Color _textDeepDark = Colors.black;
-
   @override
   void initState() {
     super.initState();
-    // Fetch notifications when dashboard loads
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref
           .read(notificationViewModelProvider.notifier)
@@ -72,7 +43,50 @@ class _BusinessDashboardScreenState
       backgroundColor: AppColors.background,
       body: Column(
         children: [
-          _buildCustomAppBar(),
+          Consumer(
+            builder: (context, ref, _) {
+              final notificationState = ref.watch(
+                notificationViewModelProvider,
+              );
+              final unreadCount = notificationState.unreadCount;
+
+              final profileState = ref.watch(businessProfileViewModelProvider);
+
+              String userName = 'Pet Business';
+
+              if (profileState.profile != null) {
+                userName = profileState.profile!.businessName;
+              }
+
+              return CustomAppBar(
+                selectedIndex: _selectedIndex,
+                userName: userName,
+                unreadNotificationCount: unreadCount,
+                onNotificationTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const BusinessNotificationsScreen(),
+                    ),
+                  ).then((_) {
+                    ref
+                        .read(notificationViewModelProvider.notifier)
+                        .getBusinessNotifications();
+                  });
+                },
+                onWalletTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          const BusinessPaymentDashboardScreen(),
+                    ),
+                  );
+                },
+                onLogoutTap: () => _showLogoutDialog(context, ref),
+              );
+            },
+          ),
           Expanded(
             child: Container(
               color: AppColors.background,
@@ -81,254 +95,71 @@ class _BusinessDashboardScreenState
           ),
         ],
       ),
-      bottomNavigationBar: _buildBottomNavBar(),
+      bottomNavigationBar: BusinessCustomBottomNavBar(
+        currentIndex: _selectedIndex,
+        onTabChanged: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+      ),
     );
   }
 
-  Widget _buildCustomAppBar() {
-    final screenData = _screenData[_selectedIndex];
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 25),
-      decoration: BoxDecoration(
-        color: AppColors.primaryWhite,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+  void _showLogoutDialog(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: AppColors.primaryWhite,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Greeting Section
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 50),
-                  Text(
-                    'Welcome back,',
-                    style: AppStyles.small.copyWith(
-                      color: AppColors.textLightGrey,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Pet Business',
-                    style: AppStyles.headline3.copyWith(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: _textDeepDark,
-                    ),
-                  ),
-                ],
-              ),
-
-              // Notification + Logout
-              Row(
-                children: [
-                  // Logout Button
-                  IconButton(
-                    onPressed: () async {
-                      final shouldLogout = await showDialog<bool>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Logout'),
-                          content: const Text(
-                            'Are you sure you want to logout?',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: const Text('Cancel'),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              child: const Text(
-                                'Logout',
-                                style: TextStyle(color: Colors.red),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-
-                      if (shouldLogout ?? false) {
-                        await ref
-                            .read(dashboardViewModelProvider.notifier)
-                            .logout();
-
-                        final state = ref.read(dashboardViewModelProvider);
-                        if (state.logoutSuccess) {
-                          Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(
-                              builder: (_) => const LoginChoiceScreen(),
-                            ),
-                          );
-                        } else if (state.message != null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(state.message!)),
-                          );
-                        }
-                      }
-                    },
-                    icon: const Icon(Icons.logout, color: Colors.red),
-                    tooltip: 'Logout',
-                  ),
-
-                  // Notification Bell with Badge
-                  Consumer(
-                    builder: (context, ref, _) {
-                      final notificationState = ref.watch(
-                        notificationViewModelProvider,
-                      );
-                      final unreadCount = notificationState.unreadCount;
-
-                      return GestureDetector(
-                        onTap: () {
-                          // Navigate to notifications screen
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const BusinessNotificationsScreen(),
-                            ),
-                          ).then((_) {
-                            // Refresh notifications when returning from notifications screen
-                            ref
-                                .read(notificationViewModelProvider.notifier)
-                                .getBusinessNotifications();
-                          });
-                        },
-                        child: Container(
-                          width: 45,
-                          height: 45,
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryWhite,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: Colors.grey.shade300,
-                              width: 1,
-                            ),
-                          ),
-                          child: Stack(
-                            children: [
-                              Center(
-                                child: Image.asset(
-                                  'assets/icons/bell.png',
-                                  height: 26,
-                                  color: _textDeepDark,
-                                ),
-                              ),
-                              if (unreadCount > 0)
-                                Positioned(
-                                  right: 5,
-                                  top: 5,
-                                  child: Container(
-                                    width: 20,
-                                    height: 20,
-                                    decoration: BoxDecoration(
-                                      color: AppColors.errorRed,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: AppColors.primaryWhite,
-                                        width: 2,
-                                      ),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        unreadCount > 9
-                                            ? '9+'
-                                            : unreadCount.toString(),
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ],
+          title: Text(
+            'Logout',
+            style: AppStyles.headline3.copyWith(color: AppColors.textBlack),
           ),
-          const SizedBox(height: 30),
-          // Page Title & Icon
-          Row(
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.bottomLeft,
-                    end: Alignment.topRight,
-                    colors: [
-                      AppColors.primaryOrange,
-                      AppColors.primaryOrange.withOpacity(0.7),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primaryOrange.withOpacity(0.4),
-                      blurRadius: 15,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Image.asset(
-                    screenData['icon_asset'] as String,
-                    color: AppColors.primaryWhite,
-                    height: 28,
-                  ),
+          content: Text(
+            'Are you sure you want to sign out of Pet Connect?',
+            style: AppStyles.body.copyWith(color: AppColors.textGrey),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Cancel',
+                style: AppStyles.body.copyWith(color: AppColors.textLightGrey),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.errorRed,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      screenData['title'],
-                      style: AppStyles.headline3.copyWith(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                        color: _textDeepDark,
-                        height: 1.1,
-                      ),
+              onPressed: () async {
+                await ref.read(dashboardViewModelProvider.notifier).logout();
+
+                if (context.mounted) {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LoginChoiceScreen(),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      screenData['subtitle'],
-                      style: AppStyles.small.copyWith(
-                        fontSize: 14,
-                        color: AppColors.textLightGrey,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
+                    (route) => false,
+                  );
+                }
+              },
+              child: Text(
+                'Logout',
+                style: AppStyles.button.copyWith(fontSize: 16),
               ),
-            ],
-          ),
-        ],
-      ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -354,161 +185,74 @@ class _BusinessDashboardScreenState
   }
 
   Widget _buildHomePage() {
-    return Consumer(
-      builder: (context, ref, _) {
-        return SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 150,
-                  height: 150,
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryOrange.withOpacity(0.12),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.primaryOrange.withOpacity(0.2),
-                      width: 5,
-                    ),
-                  ),
-                  child: Center(
-                    child: Image.asset(
-                      _screenData[0]['icon_asset'] as String,
-                      height: 60,
-                      color: AppColors.primaryOrange,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 30),
-                Text(
-                  'Dashboard Overview',
-                  textAlign: TextAlign.center,
-                  style: AppStyles.headline3.copyWith(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w700,
-                    color: _textDeepDark,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 30.0),
-                  child: Text(
-                    'Monitor your pet listings, track adoption progress, and view key business metrics here.',
-                    textAlign: TextAlign.center,
-                    style: AppStyles.body.copyWith(
-                      fontSize: 16,
-                      color: AppColors.textLightGrey.withOpacity(0.9),
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 40),
-                ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryOrange,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 30,
-                      vertical: 15,
-                    ),
-                  ),
-                  child: Text(
-                    'View Analytics (Soon)',
-                    style: AppStyles.button.copyWith(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primaryWhite,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildBottomNavBar() {
-    return Container(
-      color: AppColors.background,
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-      child: Container(
-        height: 85,
-        decoration: BoxDecoration(
-          color: AppColors.primaryWhite,
-          borderRadius: BorderRadius.circular(25),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primaryOrange.withOpacity(0.2),
-              blurRadius: 25,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: List.generate(4, (index) {
-            return Expanded(child: _buildNavItem(index));
-          }),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(int index) {
-    final isSelected = _selectedIndex == index;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedIndex = index;
-        });
-      },
-      behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        height: 75,
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+      child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.fastOutSlowIn,
-              width: isSelected ? 56 : 50,
-              height: isSelected ? 56 : 50,
+            Container(
+              width: 150,
+              height: 150,
               decoration: BoxDecoration(
-                color: isSelected
-                    ? AppColors.primaryOrange.withOpacity(0.15)
-                    : Colors.transparent,
+                color: AppColors.primaryOrange.withOpacity(0.12),
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.primaryOrange.withOpacity(0.2),
+                  width: 5,
+                ),
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.asset(
-                    _navAssetPaths[index],
-                    height: 26,
-                    color: isSelected
-                        ? AppColors.primaryOrange
-                        : AppColors.textDarkGrey,
-                  ),
-                ],
+              child: Center(
+                child: Image.asset(
+                  'assets/icons/home.png',
+                  height: 60,
+                  color: AppColors.primaryOrange,
+                ),
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 30),
             Text(
-              _navLabels[index],
-              style: AppStyles.small.copyWith(
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected
-                    ? AppColors.primaryOrange
-                    : AppColors.textDarkGrey,
+              'Dashboard Overview',
+              textAlign: TextAlign.center,
+              style: AppStyles.headline3.copyWith(
+                fontSize: 26,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textBlack,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 30.0),
+              child: Text(
+                'Monitor your pet listings, track adoption progress, and view key business metrics here.',
+                textAlign: TextAlign.center,
+                style: AppStyles.body.copyWith(
+                  fontSize: 16,
+                  color: AppColors.textLightGrey.withOpacity(0.9),
+                  height: 1.4,
+                ),
+              ),
+            ),
+            const SizedBox(height: 40),
+            ElevatedButton(
+              onPressed: () {},
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryOrange,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 30,
+                  vertical: 15,
+                ),
+              ),
+              child: Text(
+                'View Analytics (Soon)',
+                style: AppStyles.button.copyWith(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primaryWhite,
+                ),
               ),
             ),
           ],
